@@ -9,7 +9,7 @@ import org.json.JSONObject;
  */
 
 public abstract class P2PMqttRequestHandler {
-    P2PMqtt mP2PMqtt;
+    private P2PMqtt mP2PMqtt;
     private String mMqttTopic;
     private MqttMessage mMqttMessage;
     private JSONObject mJrpc;
@@ -30,7 +30,7 @@ public abstract class P2PMqttRequestHandler {
         HandleJrpc(mJrpc);
     }
 
-    public void sendReply(String result) {
+    protected void sendReply(String result) {
         int id = 0;
         try {
             id = mJrpc.getInt("id");

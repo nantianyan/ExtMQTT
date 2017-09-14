@@ -2,6 +2,7 @@ package com.example.p2pmqtt;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import org.eclipse.paho.android.service.MqttAndroidClient;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
@@ -25,12 +26,12 @@ import java.text.SimpleDateFormat;
 
 public class P2PMqtt {
     public interface IMqttRpcActionListener {
-        public void onResult(JSONObject jrpc);
+        void onResult(JSONObject jrpc);
     }
 
-    public static final String TAG = "P2PMqtt";
+    private static final String TAG = "P2PMqtt";
     private Context mContext;
-    private static MqttAndroidClient mClient;
+    private MqttAndroidClient mClient;
     private MqttCallback mMqttCallback = new MqttCallback() {
         @Override
         public void messageArrived(String topic, MqttMessage message) throws Exception {
@@ -51,6 +52,8 @@ public class P2PMqtt {
         @Override
         public void connectionLost(Throwable arg0) {
             Log.i(TAG, "connectionLost");
+            mIsConnected = false;
+            mIsOnline = false;
         }
     };
 
@@ -60,27 +63,23 @@ public class P2PMqtt {
     private String mPassWord = "password";
     private String mClientId;
 
-    private HashMap<String, P2PMqttRequestHandler> mRequestHandler = new HashMap<String, P2PMqttRequestHandler>();
-    private HashMap<String, IMqttRpcActionListener> mActionListener = new HashMap<String, IMqttRpcActionListener>();
+    private HashMap<String, P2PMqttRequestHandler> mRequestHandler = new HashMap<>();
+    private HashMap<String, IMqttRpcActionListener> mActionListener = new HashMap<>();
 
     private String mWhoami;
+    private String mWhoamiPwd;
     private boolean mIsConnected = false;
+    private boolean mIsOnline = false;
 
     public P2PMqtt(Context context) {
-        //TODO:  maybe fetch whoami from a server.
-        this(context, "tester");
+        this(context, "tester", "12345");
     }
 
-    public P2PMqtt(Context context, String whoami) {
+    public P2PMqtt(Context context, String whoami, String password) {
+        //TODO:  regist whoami and password in specific module, not here
         mContext = context;
         mWhoami = whoami;
-    }
-
-    //TODO: register should be extended by subclass
-    public void register(/*String params*/) {
-        String params =
-                "{\"plate\": \"A0001\", \"longi\":46.23, \"lati\":46.67, \"time\": 123456}";
-        sendRequest("controller", "register", params);
+        mWhoamiPwd = password;
     }
 
     public boolean connect(String host) {
@@ -96,6 +95,7 @@ public class P2PMqtt {
                 mConnectOptions.setCleanSession(true);
                 mConnectOptions.setConnectionTimeout(10); // 10s
                 mConnectOptions.setKeepAliveInterval(20);
+                //TODO: connect host with whoami and whami's password or in putOnline function?
                 //mConnectOptions.setUserName(userName);
                 //mConnectOptions.setPassword(passWord.toCharArray());
                 //mConnectOptions.setAutomaticReconnect(true);
@@ -111,7 +111,6 @@ public class P2PMqtt {
                         topic = mWhoami + "/+/reply";
                         MqttSubscribe(topic, 2);
 
-                        //TODO: if this device already registed, then
                         putOnline();
                     }
 
@@ -130,22 +129,57 @@ public class P2PMqtt {
         return true;
     }
 
-    public boolean isConnected() {
-        if (mClient == null)
-            return false;
-        return mClient.isConnected();
+    private void putOnline() {
+        if(mClient.isConnected()) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date curDate = new Date(System.currentTimeMillis());
+            // String time = curDate.toString();
+            String strTime = formatter.format(curDate);
+            String params = "{\"whoami\":\"" + mWhoami + "\"," +
+                    "\"time\":\"" + strTime + "\"," +
+                    "\"location\":\"longi lati\"}";
+
+            sendRequest("controller", "online", params, new IMqttRpcActionListener() {
+                public void onResult(JSONObject jrpc) {
+                    Log.d(TAG, "in online result callback");
+                    String result = null;
+                    try {
+                        result = jrpc.getString("result");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    Log.d(TAG, "jrpc's result is: " + result);
+                    if (result.equalsIgnoreCase("OK")) {
+                        Log.i(TAG, "\t on line is OK!");
+                        mIsOnline = true;
+                    }
+                }
+            }, true);
+        } else {
+            Log.e(TAG, "cannot put it on line, make sure connect ok");
+        }
     }
 
     public void sendRequest(String whoareyou, String methodName, String methodParam){
         sendRequest(whoareyou, methodName, methodParam, null);
     }
 
-    public void sendRequest(String whoareyou, String methodName, String methodParam, IMqttRpcActionListener listener){
+    public void sendRequest(String whoareyou, String methodName, String methodParam, IMqttRpcActionListener listener) {
+        if(mIsOnline == false) {
+            String info = "client is not online, so request:" + methodName + " is failed to send!";
+            Toast.makeText(mContext, info, Toast.LENGTH_LONG).show();
+        } else {
+            sendRequest(whoareyou, methodName, methodParam, listener, false);
+        }
+    }
+
+    private void sendRequest(String whoareyou, String methodName, String methodParam, IMqttRpcActionListener listener, boolean force){
         Log.d(TAG, "sendRequest");
         Log.d(TAG, "to: " + whoareyou + ", method: " + methodName + ", params: " + methodParam);
         if (mClient.isConnected()) {
             String id = Long.toString(System.nanoTime());
             if(listener != null) {
+                Log.d(TAG, "add listener for id: " + id);
                 mActionListener.put(id, listener);
             }
 
@@ -164,44 +198,14 @@ public class P2PMqtt {
 
             MqttPublish(topic, payload, 2, false);
         } else {
-            Log.e(TAG, "client is not connected, so request:" + methodName + " is failed to send!");
-
+            String info = "client is not connected, so request:" + methodName + " is failed to send!";
+            Log.e(TAG, info);
+            Toast.makeText(mContext, info, Toast.LENGTH_LONG).show();
         }
-    }
-
-    public void sendReply(String topic, JSONObject jrpc, String result) {
-        int id = 0;
-        try {
-            id = jrpc.getInt("id");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        String replyTopic = topic.split("/")[1] + "/" + topic.split("/")[0] + "/reply";
-
-        String payload = "{";
-        payload = payload + "\"jsonrpc\":\"2.0\",";
-        payload = payload + "\"result\":" + result + ",";
-        payload = payload + "\"id\":" + id;
-        payload = payload + "}";
-
-        MqttPublish(replyTopic, payload, 2, false);
     }
 
     public void installRequestHandler(String method, P2PMqttRequestHandler handler) {
         mRequestHandler.put(method, handler);
-    }
-
-    private void putOnline(/*String params*/) {
-        SimpleDateFormat   formatter   =   new   SimpleDateFormat   ("yyyy年MM月dd日   HH:mm:ss");
-        Date curDate =  new Date(System.currentTimeMillis());
-        // String time = curDate.toString();
-        String strTime = formatter.format(curDate);
-        String params = "{\"whoami\":\"" + mWhoami + "\"," +
-                "\"time\":\"" + strTime + "\"," +
-                "\"location\":\"longi lati\"}";
-
-        sendRequest("controller", "online", params);
     }
 
     private void onMqttMessage(String topic, MqttMessage message) {
@@ -231,7 +235,7 @@ public class P2PMqtt {
                 String id = jrpc.getString("id");
                 Log.d(TAG, "  reply result: " + jrpc.getString("result"));
                 Log.d(TAG, "  reply id: " + id);
-                String strID = id.toString();
+                String strID = id; // we force id to use String rather int. id.toString();
                 if(mActionListener.containsKey(strID)){
                     mActionListener.get(strID).onResult(jrpc);
                 }

@@ -15,12 +15,12 @@ import com.example.p2pmqtt.P2PMqttRequestHandler;
 
 
 public class MainActivity extends AppCompatActivity {
-    public static final String TAG = "testMQTT";
+    public static final String TAG = "demo";
 
     Context mContext = this;
     P2PMqtt mMqttClient = new P2PMqtt(this);
 
-    class HelloHandler extends P2PMqttRequestHandler {
+    private class HelloHandler extends P2PMqttRequestHandler {
         public void HandleJrpc (JSONObject jrpc){
             try {
                 Log.d(TAG, "this is hello's topicHandle");
