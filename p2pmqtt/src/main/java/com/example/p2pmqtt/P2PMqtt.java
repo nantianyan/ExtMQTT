@@ -71,6 +71,8 @@ public class P2PMqtt {
     private boolean mIsConnected = false;
     private boolean mIsOnline = false;
 
+    private IMqttRpcActionListener mOnlineCallback = null;
+
     public P2PMqtt(Context context) {
         this(context, "tester", "12345");
     }
@@ -83,6 +85,12 @@ public class P2PMqtt {
     }
 
     public boolean connect(String host) {
+        return connect(host, null);
+    }
+
+    public boolean connect(String host, IMqttRpcActionListener onlineCallback) {
+        mOnlineCallback = onlineCallback;
+
         mHost = host;
         mClientId = MqttClient.generateClientId();
         mClient = new MqttAndroidClient(mContext, mHost, mClientId);
@@ -126,7 +134,7 @@ public class P2PMqtt {
             }
         }
 
-        return true;
+        return  true;
     }
 
     private void putOnline() {
@@ -152,6 +160,11 @@ public class P2PMqtt {
                     if (result.equalsIgnoreCase("OK")) {
                         Log.i(TAG, "\t on line is OK!");
                         mIsOnline = true;
+
+                        if(mOnlineCallback != null) {
+                            Log.d(TAG, "on line callback is trigged");
+                            mOnlineCallback.onResult(jrpc);
+                        }
                     }
                 }
             }, true);
@@ -238,6 +251,7 @@ public class P2PMqtt {
                 String strID = id; // we force id to use String rather int. id.toString();
                 if(mActionListener.containsKey(strID)){
                     mActionListener.get(strID).onResult(jrpc);
+                    mActionListener.remove("strID");
                 }
                 /*
                 JSONArray jsonArray = new JSONArray(srpc);

@@ -53,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 mMqttClient.sendRequest("controller", "hello", "this is hello's param");
             }
         });
+
     }
 
     @Override
