@@ -25,8 +25,15 @@ import java.text.SimpleDateFormat;
  */
 
 public class P2PMqtt {
+    public enum ResultCode {
+        ERROR_None,
+        ERROR_TimeOut,
+        ERROR_BadData,
+        ERROR_Unknown
+    }
+
     public interface IMqttRpcActionListener {
-        void onResult(JSONObject jrpc);
+        ResultCode onResult(JSONObject jrpc);
     }
 
     private static final String TAG = "P2PMqtt";
@@ -148,7 +155,7 @@ public class P2PMqtt {
                     "\"location\":\"longi lati\"}";
 
             sendRequest("controller", "online", params, new IMqttRpcActionListener() {
-                public void onResult(JSONObject jrpc) {
+                public ResultCode onResult(JSONObject jrpc) {
                     Log.d(TAG, "in online result callback");
                     String result = null;
                     try {
@@ -166,6 +173,7 @@ public class P2PMqtt {
                             mOnlineCallback.onResult(jrpc);
                         }
                     }
+                    return ResultCode.ERROR_None;
                 }
             }, true);
         } else {
@@ -184,6 +192,11 @@ public class P2PMqtt {
         } else {
             sendRequest(whoareyou, methodName, methodParam, listener, false);
         }
+    }
+
+    public boolean sendSimpleRequest(P2PMqttSimpleRequest request) {
+        sendRequest(request.getWhoareyou(), request.getMethodName(), request.getMethodParams(), request);
+        return request.waitComplete();
     }
 
     private void sendRequest(String whoareyou, String methodName, String methodParam, IMqttRpcActionListener listener, boolean force){
@@ -253,14 +266,6 @@ public class P2PMqtt {
                     mActionListener.get(strID).onResult(jrpc);
                     mActionListener.remove("strID");
                 }
-                /*
-                JSONArray jsonArray = new JSONArray(srpc);
-                Log.i(TAG, "Number of entries " + jsonArray.length());
-                for (int i = 0; i < jsonArray.length(); i++) {
-                    JSONObject jsonObject = jsonArray.getJSONObject(i);
-                    Log.i(TAG, jsonObject.getString("method"));
-                }
-                */
             } catch (Exception e) {
                 e.printStackTrace();
             }
