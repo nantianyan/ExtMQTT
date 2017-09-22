@@ -14,8 +14,10 @@ import android.widget.Toast;
 import org.json.JSONException;
 import org.json.JSONObject;
 import com.example.p2pmqtt.P2PMqtt;
+import com.example.p2pmqtt.P2PMqttAsyncRequest;
+import com.example.p2pmqtt.P2PMqttRequest;
 import com.example.p2pmqtt.P2PMqttRequestHandler;
-import com.example.p2pmqtt.P2PMqttSimpleRequest;
+import com.example.p2pmqtt.P2PMqttSyncRequest;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -73,8 +75,13 @@ public class MainActivity extends AppCompatActivity {
                                so it can not be called in main thread.
                                since mqtt service exist in mail thread, so such waiting will be deadlock
                             */
-                            P2PMqttSimpleRequest request = new P2PMqttSimpleRequest("controller", "hello", "hello param", true);
-                            if(mMqttClient.sendSimpleRequest(request)) {
+                            P2PMqttSyncRequest request = new P2PMqttSyncRequest();
+                            request.setWhoareyou("controller");
+                            request.setMethodName("hello");
+                            request.setMethodParams("how are you");
+                            request.setListener(P2PMqttRequest.SIMPLE_LISTENER);
+
+                            if(mMqttClient.sendRequest(request)) {
                                 Log.d(TAG, "hello is called succussfull!");
                             } else {
                                 Log.d(TAG, "hello is failed!");
@@ -92,7 +99,6 @@ public class MainActivity extends AppCompatActivity {
         buttonSyncPublish.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //mMqttClient.sendRequest("controller", "hello", "this is hello's param");
                 Log.d(TAG, "@onClick send sync reqeust");
                 Message m = mHandler.obtainMessage(REQUEST, REQUEST_HELLO, 0, null);
                 mHandler.sendMessage(m);
@@ -104,23 +110,18 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 Log.d(TAG, "@onClick send async reqeust");
-                mMqttClient.sendRequest("controller", "hello", "this is hello's param",
-                        new P2PMqtt.IMqttRpcActionListener() {
-                            public P2PMqtt.ResultCode onResult(JSONObject jrpc) {
-                                Log.d(TAG, "async onResult");
-                                String result = null;
-                                try {
-                                    result = jrpc.getString("result");
-                                } catch (JSONException e) {
-                                    e.printStackTrace();
-                                }
-                                Log.d(TAG, "async jrpc's result is: " + result);
-                                if (result.equalsIgnoreCase("OK")) {
-                                    Log.i(TAG, "\t async result is OK!");
-                                }
-                                return P2PMqtt.ResultCode.ERROR_None;
-                            }
-                });
+                P2PMqttAsyncRequest request = new P2PMqttAsyncRequest();
+                request.setWhoareyou("controller");
+                request.setMethodName("hello");
+                request.setMethodParams("how are you");
+                request.setListener(P2PMqttRequest.SIMPLE_LISTENER);
+
+                if(mMqttClient.sendRequest(request)) {
+                    Log.d(TAG, "hello is called succussfull!");
+                } else {
+                    Log.d(TAG, "hello is failed!");
+                }
+
             }
         });
     }

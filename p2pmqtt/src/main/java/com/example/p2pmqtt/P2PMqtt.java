@@ -194,7 +194,12 @@ public class P2PMqtt {
         }
     }
 
-    public boolean sendSimpleRequest(P2PMqttSimpleRequest request) {
+    public boolean sendSimpleRequest(P2PMqttSyncRequest request) {
+        sendRequest(request.getWhoareyou(), request.getMethodName(), request.getMethodParams(), request);
+        return request.waitComplete();
+    }
+
+    public boolean sendRequest(P2PMqttRequest request) {
         sendRequest(request.getWhoareyou(), request.getMethodName(), request.getMethodParams(), request);
         return request.waitComplete();
     }
