@@ -167,11 +167,10 @@ public class P2PMqtt {
                     if (result.equalsIgnoreCase("OK")) {
                         Log.i(TAG, "\t on line is OK!");
                         mIsOnline = true;
-
-                        if(mOnlineCallback != null) {
-                            Log.d(TAG, "on line callback is trigged");
-                            mOnlineCallback.onResult(jrpc);
-                        }
+                    }
+                    if(mOnlineCallback != null) {
+                        Log.d(TAG, "on line callback is trigged");
+                        mOnlineCallback.onResult(jrpc);
                     }
                     return ResultCode.ERROR_None;
                 }
