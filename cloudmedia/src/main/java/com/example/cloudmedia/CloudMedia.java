@@ -24,28 +24,15 @@ public class CloudMedia {
     private String mBrokerUrl;
     private  String mMyID;
 
-    public CloudMedia(Context context) {
+    public CloudMedia(Context context, String myID) {
         mContext = context;
-    }
-
-    public boolean connect(String brokerUrl, String myID) {
-        assert(brokerUrl != null);
-        mBrokerUrl = brokerUrl;
         mMyID = myID;
-
-        if(mMyID == null) {
-            //request a dynamic ID
-            mMyID = "puller";
-        }
-        mExtMqttClient = new P2PMqtt(mContext, mMyID, "12345");
-        return mExtMqttClient.connect("tcp://139.224.128.15:1883");
     }
 
-    public boolean connect(String brokerUrl, String myID, final SimpleActionListener listener) {
+    public boolean connect(String brokerUrl, final SimpleActionListener listener) {
         assert(brokerUrl != null);
         assert(listener != null);
         mBrokerUrl = brokerUrl;
-        mMyID = myID;
 
         if(mMyID == null) {
             //request a dynamic ID

@@ -3,13 +3,18 @@ package com.example.democm;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import com.example.cloudmedia.CloudMedia;
+import com.example.cloudmedia.LocalMediaNode;
 import com.example.cloudmedia.RemoteMediaNode;
 
 public class MainActivity extends AppCompatActivity {
@@ -17,36 +22,69 @@ public class MainActivity extends AppCompatActivity {
     private final Context mContext = this;
     private CloudMedia mCloudMedia;
     private RemoteMediaNode mRemoteMediaNode;
+    private LocalMediaNode mLocalMediaNode;
+
+    private String mMyID;
+    private String mYourID;
+    private EditText mEtMyID;
+    private EditText mEtYourID;
+    private Button mButtonConnect;
+    private Button mButtonStart;
+    private Button mButtonStop;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final Button buttonConnect = (Button) findViewById(R.id.buttonConnect);
-        buttonConnect.setOnClickListener(new View.OnClickListener() {
+        mEtMyID = (EditText)findViewById(R.id.etMyID);
+        mEtYourID = (EditText)findViewById(R.id.etYourID);
+
+        mButtonConnect = (Button) findViewById(R.id.buttonConnect);
+        mButtonConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mCloudMedia = new CloudMedia(mContext);
-                //mCloudMedia.connect("tcp://139.224.128.15:1883", "car123");
-                mCloudMedia.connect("tcp://139.224.128.15:1883", "car123",
+                mMyID = mEtMyID.getText().toString();
+                Log.i(TAG, "myID: " + mMyID);
+
+                mCloudMedia = new CloudMedia(mContext, mMyID);
+
+                mCloudMedia.connect("tcp://139.224.128.15:1883",
                         new CloudMedia.SimpleActionListener() {
                     @Override
                     public boolean onResult(String result) {
                         Log.i(TAG, "connect result is: " + result);
+                        mButtonStart.setEnabled(true);
+                        mButtonConnect.setEnabled(false);
                         return true;
                     }
                 });
-                mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode("controller");
+
+                mYourID = mEtYourID.getText().toString();
+                Log.i(TAG, "Your ID: " + mYourID);
+
+                mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(mYourID);
+
+                mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
+                mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
+                    @Override
+                    public void onStartPushMedia(String params) {
+                        Toast.makeText(mContext, "start push", Toast.LENGTH_LONG).show();
+                    }
+                });
+                mLocalMediaNode.setOnStopPushMediaActor(new LocalMediaNode.OnStopPushMedia() {
+                    @Override
+                    public void onStopPushMedia(String params) {
+                        Toast.makeText(mContext, "stop push", Toast.LENGTH_LONG).show();
+                    }
+                });
             }
         });
 
-        final Button buttonStart = (Button) findViewById(R.id.buttonStart);
-        buttonStart.setOnClickListener(new View.OnClickListener() {
+        mButtonStart = (Button) findViewById(R.id.buttonStart);
+        mButtonStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //mRemoteMediaNode.startPushMedia("rtmp://xxx.xxx.xxx.xxx/app/name");
-
                 mRemoteMediaNode.startPushMedia("rtmp://xxx.xxx.xxx.xxx/app/name",
                         new CloudMedia.SimpleActionListener() {
                     @Override
@@ -57,15 +95,17 @@ public class MainActivity extends AppCompatActivity {
                         return true;
                     }
                 });
+
+                mButtonStart.setEnabled(false);
+                if(!mButtonStop.isEnabled())
+                    mButtonStop.setEnabled(true);
             }
         });
 
-        final Button buttonStop = (Button) findViewById(R.id.buttonStop);
-        buttonStop.setOnClickListener(new View.OnClickListener() {
+        mButtonStop = (Button) findViewById(R.id.buttonStop);
+        mButtonStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //mRemoteMediaNode.stopPushMedia("rtmp://xxx.xxx.xxx.xxx/app/name");
-
                 mRemoteMediaNode.stopPushMedia("rtmp://xxx.xxx.xxx.xxx/app/name",
                         new CloudMedia.SimpleActionListener() {
                     @Override
@@ -76,6 +116,10 @@ public class MainActivity extends AppCompatActivity {
                         return true;
                     }
                 });
+
+                mButtonStop.setEnabled(false);
+                if(!mButtonStart.isEnabled())
+                    mButtonStart.setEnabled(true);
             }
         });
     }
