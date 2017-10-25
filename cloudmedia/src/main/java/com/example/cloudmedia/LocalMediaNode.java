@@ -19,7 +19,7 @@ public class LocalMediaNode{
 
 
     private class StartPushMediaHandler extends P2PMqttRequestHandler {
-        public void HandleJrpc (JSONObject jrpc){
+        public String HandleJrpc (JSONObject jrpc){
             try {
                 Log.d(TAG, "this is StartPushMediaHandler's topicHandle");
                 String method = jrpc.getString("method");
@@ -30,14 +30,15 @@ public class LocalMediaNode{
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
+                return "ERROR";
             }
 
-            sendReply("OK");
+            return "OK";
         }
     }
 
     private class StopPushMediaHandler extends P2PMqttRequestHandler {
-        public void HandleJrpc (JSONObject jrpc){
+        public String HandleJrpc (JSONObject jrpc){
             try {
                 Log.d(TAG, "this is StopPushMediaHandler's topicHandle");
                 String method = jrpc.getString("method");
@@ -48,9 +49,10 @@ public class LocalMediaNode{
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
+                return "ERROR";
             }
 
-            sendReply("OK");
+            return "OK";
         }
     }
 

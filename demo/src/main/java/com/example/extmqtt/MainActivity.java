@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_HELLO = 0;
 
     private class HelloHandler extends P2PMqttRequestHandler {
-        public void HandleJrpc (JSONObject jrpc){
+        public String HandleJrpc (JSONObject jrpc){
             try {
                 Log.d(TAG, "this is hello's topicHandle");
                 String method = jrpc.getString("method");
@@ -42,9 +42,10 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(mContext, "some body called hello", Toast.LENGTH_LONG).show();
             } catch (JSONException e) {
                 e.printStackTrace();
+                return "ERROR";
             }
 
-            sendReply("OK");
+            return "OK";
         }
     }
 

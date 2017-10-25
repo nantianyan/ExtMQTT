@@ -14,7 +14,7 @@ public abstract class P2PMqttRequestHandler {
     private MqttMessage mMqttMessage;
     private JSONObject mJrpc;
 
-    public abstract void HandleJrpc(JSONObject jrpc);
+    public abstract String HandleJrpc(JSONObject jrpc);
 
     public void onMqttMessage(P2PMqtt p2pmqtt, String topic, MqttMessage message) {
         mP2PMqtt = p2pmqtt;
@@ -27,10 +27,11 @@ public abstract class P2PMqttRequestHandler {
             e.printStackTrace();
         }
 
-        HandleJrpc(mJrpc);
+        String result = HandleJrpc(mJrpc);
+        sendReply(result);
     }
 
-    protected void sendReply(String result) {
+    private void sendReply(String result) {
         int id = 0;
         try {
             id = mJrpc.getInt("id");
