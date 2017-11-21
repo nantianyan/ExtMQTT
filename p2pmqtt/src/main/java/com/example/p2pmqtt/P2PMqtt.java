@@ -114,6 +114,8 @@ public class P2PMqtt {
                 //mConnectOptions.setUserName(userName);
                 //mConnectOptions.setPassword(passWord.toCharArray());
                 //mConnectOptions.setAutomaticReconnect(true);
+                mConnectOptions.setWill("nodes_will/" + mWhoami, mWhoami.getBytes(), 2, false);
+
                 mClient.connect(mConnectOptions, this, new IMqttActionListener() {
                     @Override
                     public void onSuccess(IMqttToken arg0) {

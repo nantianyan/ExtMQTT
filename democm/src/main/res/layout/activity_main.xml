@@ -42,6 +42,13 @@
             android:layout_marginRight="@dimen/fab_margin"/>
 
         <Button
+            android:id="@+id/buttonGetID"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/fab_margin"
+            android:text="get ID" />
+
+        <Button
             android:id="@+id/buttonConnect"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

@@ -125,6 +125,14 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        final Button buttonDisconnect = (Button) findViewById(R.id.buttonDisconnect);
+        buttonDisconnect.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                    mMqttClient.MqttDisconnect();
+            }
+        });
     }
 
     @Override

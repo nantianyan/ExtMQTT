@@ -25,5 +25,11 @@
             android:layout_height="wrap_content"
             android:text="ASync Publish" />
 
+        <Button
+            android:id="@+id/buttonDisconnect"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Disconnect" />
+
     </LinearLayout>
 </android.support.constraint.ConstraintLayout>

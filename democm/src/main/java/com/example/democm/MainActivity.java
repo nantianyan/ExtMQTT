@@ -2,6 +2,9 @@ package com.example.democm;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -16,6 +19,8 @@ import android.widget.Toast;
 import com.example.cloudmedia.CloudMedia;
 import com.example.cloudmedia.LocalMediaNode;
 import com.example.cloudmedia.RemoteMediaNode;
+import com.example.p2pmqtt.P2PMqttRequest;
+import com.example.p2pmqtt.P2PMqttSyncRequest;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "CloudMediaDemo";
@@ -32,6 +37,15 @@ public class MainActivity extends AppCompatActivity {
     private Button mButtonStart;
     private Button mButtonStop;
 
+    private HandlerThread mHandlerThread;
+    private Handler mHandler;
+    private static final int HTTP_REQUEST = 200;
+    private static final int HTTP_REQUEST_ID = HTTP_REQUEST + 1;
+
+    private Handler mMainHandler;
+    private static final int UI_REQUEST = 100;
+    private static final int UI_REQUEST_SET_MY_ID = UI_REQUEST + 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,6 +53,54 @@ public class MainActivity extends AppCompatActivity {
 
         mEtMyID = (EditText)findViewById(R.id.etMyID);
         mEtYourID = (EditText)findViewById(R.id.etYourID);
+
+
+        mHandlerThread = new HandlerThread("IDManager");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper()) {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                if(msg.what == HTTP_REQUEST) {
+                    switch (msg.arg1) {
+                        case HTTP_REQUEST_ID:
+                            String myID = CloudMedia.getIDFromServer();
+                            Log.i(TAG, "getIDFromeServer:" + myID);
+                            // note: you can not set UI widget from this thread. like:
+                            // mEtMyID.setText(myID);
+                            Message m = mMainHandler.obtainMessage(UI_REQUEST, UI_REQUEST_SET_MY_ID, 0, myID);
+                            mMainHandler.sendMessage(m);
+                            break;
+                    }
+
+                }
+
+            }
+        };
+
+        mMainHandler = new Handler(getMainLooper()) {
+          @Override
+          public void handleMessage(Message msg) {
+              super.handleMessage(msg);
+              if(msg.what == UI_REQUEST) {
+                  switch (msg.arg1) {
+                      case UI_REQUEST_SET_MY_ID:
+                          mEtMyID.setText((String)msg.obj);
+                          break;
+                  }
+
+              }
+          }
+        };
+
+        Button mButtonGetID = (Button) findViewById(R.id.buttonGetID);
+        mButtonGetID.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Message m = mHandler.obtainMessage(HTTP_REQUEST, HTTP_REQUEST_ID, 0, null);
+                mHandler.sendMessage(m);
+            }
+        });
 
         mButtonConnect = (Button) findViewById(R.id.buttonConnect);
         mButtonConnect.setOnClickListener(new View.OnClickListener() {
