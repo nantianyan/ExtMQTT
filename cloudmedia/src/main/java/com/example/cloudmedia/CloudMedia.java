@@ -7,6 +7,7 @@ import android.os.Message;
 import android.util.Log;
 
 import com.example.p2pmqtt.P2PMqtt;
+import com.example.p2pmqtt.P2PMqttAsyncRequest;
 import com.example.p2pmqtt.P2PMqttRequest;
 import com.example.p2pmqtt.P2PMqttSyncRequest;
 
@@ -91,6 +92,42 @@ public class CloudMedia {
         return "tcp://139.224.128.15:1883";
     }
 
+
+    public boolean getNodesOnline(final CloudMedia.SimpleActionListener listener){
+        P2PMqttAsyncRequest request = new P2PMqttAsyncRequest();
+        request.setWhoareyou("controller");
+        request.setMethodName("get_nodes_online");
+        request.setMethodParams("none");
+        if(listener == null) {
+            request.setListener(P2PMqttRequest.SIMPLE_LISTENER);
+        } else {
+            request.setListener(new P2PMqtt.IMqttRpcActionListener() {
+                @Override
+                public P2PMqtt.ResultCode onResult(JSONObject jrpc) {
+                    String result = null;
+                    try {
+                        result = jrpc.getString("result");
+                        Log.d(TAG, "jrpc's result is: " + result);
+                    } catch (JSONException e) {
+                        Log.d(TAG, "illeagle JSON!");
+                        e.printStackTrace();
+                    }
+                    if (listener.onResult(result)) {
+                        return P2PMqtt.ResultCode.ERROR_None;
+                    } else {
+                        return P2PMqtt.ResultCode.ERROR_Unknown;
+                    }
+                }
+            });
+        }
+
+        if(mExtMqttClient.sendRequest(request)) {
+            Log.d(TAG, "getNodesOnline is called succussfull!");
+        } else {
+            Log.d(TAG, "getNodesOnline is failed!");
+        }
+        return true;
+    }
 
     public CloudMedia(Context context) {
         mContext = context;

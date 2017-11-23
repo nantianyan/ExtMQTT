@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private String mYourID;
     private EditText mEtYourID;
     private Button mButtonConnect;
+    private Button mButtonGetOnlineNodes;
     private Button mButtonStart;
     private Button mButtonStop;
 
@@ -57,14 +58,11 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public boolean onResult(String result) {
                         Log.i(TAG, "connect result is: " + result);
-                        mButtonStart.setEnabled(true);
                         mButtonConnect.setEnabled(false);
+                        mButtonGetOnlineNodes.setEnabled(true);
                         return true;
                     }
                 });
-
-                mYourID = mEtYourID.getText().toString();
-                mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(mYourID);
 
                 mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
                 mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
@@ -79,6 +77,35 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(mContext, "stop push", Toast.LENGTH_LONG).show();
                     }
                 });
+            }
+        });
+
+        mButtonGetOnlineNodes = (Button) findViewById(R.id.buttonGetOnlineNodes);
+        mButtonGetOnlineNodes.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e){
+                    e.printStackTrace();
+                }
+
+                mCloudMedia.getNodesOnline(new CloudMedia.SimpleActionListener(){
+                    @Override
+                    public boolean onResult(String result) {
+                        Log.i(TAG, "getNodesOnline:");
+                        Log.i(TAG, ">>> " + result);
+                        mButtonStart.setEnabled(true);
+                        mButtonConnect.setEnabled(false);
+                        //TODO: parse the result and put the online nodes into list
+                        // and then, choose the id to trigger their method.
+                        return true;
+                    }
+                });
+
+                // NOTE: should get the online nodes list, and parse the ID.
+                mYourID = mEtYourID.getText().toString();
+                mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(mYourID);
             }
         });
 

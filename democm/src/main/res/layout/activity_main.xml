@@ -50,6 +50,13 @@
             android:text="connect" />
 
         <Button
+            android:id="@+id/buttonGetOnlineNodes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Get_Online_Nodes"
+            android:enabled="false"/>
+
+        <Button
             android:id="@+id/buttonStart"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

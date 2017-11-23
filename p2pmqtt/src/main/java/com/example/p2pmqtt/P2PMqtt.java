@@ -72,6 +72,7 @@ public class P2PMqtt {
 
     private HashMap<String, P2PMqttRequestHandler> mRequestHandler = new HashMap<>();
     private HashMap<String, IMqttRpcActionListener> mActionListener = new HashMap<>();
+    private HashMap<String, MqttTopicHandler> mTopicHandler = new HashMap<>();
 
     private String mWhoami;
     private String mWhoamiPwd;
@@ -243,6 +244,10 @@ public class P2PMqtt {
         mRequestHandler.put(method, handler);
     }
 
+    public void installTopicHandler(String topic, MqttTopicHandler handler) {
+        mTopicHandler.put(topic, handler);
+    }
+
     private void onMqttMessage(String topic, MqttMessage message) {
         if(topic.contains("/request")){
             // TODO: validate the json object
@@ -278,6 +283,14 @@ public class P2PMqtt {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+        } else if (mTopicHandler.containsKey(topic)) {
+            try {
+                JSONObject jrpc = new JSONObject(message.toString());
+                mTopicHandler.get(topic).onMqttMessage(jrpc);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         }
     }
 
