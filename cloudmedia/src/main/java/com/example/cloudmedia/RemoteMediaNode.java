@@ -17,6 +17,7 @@ public class RemoteMediaNode{
     private static final String TAG = "RemoteMediaNode";
     private String mWhoareyou;
     private P2PMqtt mExtMqttClient; //TODO: cycle reference
+    private String mRtmpPublishUrl;
 
     public static final String REQUEST_START_PUSH_MEDIA = "startPushMedia";
     public static final String REQUEST_STOP_PUSH_MEDIA = "stopPushMedia";
@@ -24,17 +25,21 @@ public class RemoteMediaNode{
     private RemoteMediaNode(P2PMqtt mqttClient, String whoareyou){
         mWhoareyou = whoareyou;
         mExtMqttClient = mqttClient;
+        mRtmpPublishUrl = generateRtmpPublishUrl();
     }
 
     public static RemoteMediaNode create(P2PMqtt mqttClient, String whoareyou){
         return new RemoteMediaNode(mqttClient, whoareyou);
     }
 
-    public boolean startPushMedia(String url){
-        return startPushMedia(url, null);
+    private String generateRtmpPublishUrl(){
+        String streamName = mWhoareyou + System.nanoTime();
+        return "rtmp://video-center.alivecdn.com/cloudmedia/" + streamName + "?vhost=push.yangxudong.com";
     }
 
-    public boolean startPushMedia(String url, final CloudMedia.SimpleActionListener listener){
+    public boolean startPushMedia(final CloudMedia.SimpleActionListener listener){
+        String url = mRtmpPublishUrl;
+
         P2PMqttAsyncRequest request = new P2PMqttAsyncRequest();
         request.setWhoareyou(mWhoareyou);
         request.setMethodName(REQUEST_START_PUSH_MEDIA);
@@ -71,11 +76,9 @@ public class RemoteMediaNode{
         }
     }
 
-    public boolean stopPushMedia(String url){
-        return stopPushMedia(url, null);
-    }
+    public boolean stopPushMedia(final CloudMedia.SimpleActionListener listener){
+        String url = mRtmpPublishUrl;
 
-    public boolean stopPushMedia(String url, final CloudMedia.SimpleActionListener listener){
         P2PMqttAsyncRequest request = new P2PMqttAsyncRequest();
         request.setWhoareyou(mWhoareyou);
         request.setMethodName(REQUEST_STOP_PUSH_MEDIA);

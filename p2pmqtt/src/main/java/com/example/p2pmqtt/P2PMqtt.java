@@ -75,20 +75,22 @@ public class P2PMqtt {
 
     private String mWhoami;
     private String mWhoamiPwd;
+    private String mNickName;
     private boolean mIsConnected = false;
     private boolean mIsOnline = false;
 
     private IMqttRpcActionListener mOnlineCallback = null;
 
     public P2PMqtt(Context context) {
-        this(context, "tester", "12345");
+        this(context, "tester", "12345", "Nick");
     }
 
-    public P2PMqtt(Context context, String whoami, String password) {
+    public P2PMqtt(Context context, String whoami, String password, String nickName) {
         //TODO:  regist whoami and password in specific module, not here
         mContext = context;
         mWhoami = whoami;
         mWhoamiPwd = password;
+        mNickName = nickName;
     }
 
     public boolean connect(String host) {
@@ -154,7 +156,8 @@ public class P2PMqtt {
             String strTime = formatter.format(curDate);
             String params = "{\"whoami\":\"" + mWhoami + "\"," +
                     "\"time\":\"" + strTime + "\"," +
-                    "\"location\":\"longi lati\"}";
+                    "\"location\":\"longi lati\"," +
+                    "\"nick\":\"" + mNickName + "\"}";
 
             sendRequest("controller", "online", params, new IMqttRpcActionListener() {
                 public ResultCode onResult(JSONObject jrpc) {

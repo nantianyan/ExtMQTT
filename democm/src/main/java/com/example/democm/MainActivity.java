@@ -29,90 +29,31 @@ public class MainActivity extends AppCompatActivity {
     private RemoteMediaNode mRemoteMediaNode;
     private LocalMediaNode mLocalMediaNode;
 
-    private String mMyID;
+    private String mMyNick;
+    private EditText mEtMyNick;
     private String mYourID;
-    private EditText mEtMyID;
     private EditText mEtYourID;
     private Button mButtonConnect;
     private Button mButtonStart;
     private Button mButtonStop;
 
-    private HandlerThread mHandlerThread;
-    private Handler mHandler;
-    private static final int HTTP_REQUEST = 200;
-    private static final int HTTP_REQUEST_ID = HTTP_REQUEST + 1;
-
-    private Handler mMainHandler;
-    private static final int UI_REQUEST = 100;
-    private static final int UI_REQUEST_SET_MY_ID = UI_REQUEST + 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mEtMyID = (EditText)findViewById(R.id.etMyID);
+        mEtMyNick = (EditText)findViewById(R.id.etMyNick);
         mEtYourID = (EditText)findViewById(R.id.etYourID);
-
-
-        mHandlerThread = new HandlerThread("IDManager");
-        mHandlerThread.start();
-        mHandler = new Handler(mHandlerThread.getLooper()) {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                if(msg.what == HTTP_REQUEST) {
-                    switch (msg.arg1) {
-                        case HTTP_REQUEST_ID:
-                            String myID = CloudMedia.getIDFromServer();
-                            Log.i(TAG, "getIDFromeServer:" + myID);
-                            // note: you can not set UI widget from this thread. like:
-                            // mEtMyID.setText(myID);
-                            Message m = mMainHandler.obtainMessage(UI_REQUEST, UI_REQUEST_SET_MY_ID, 0, myID);
-                            mMainHandler.sendMessage(m);
-                            break;
-                    }
-
-                }
-
-            }
-        };
-
-        mMainHandler = new Handler(getMainLooper()) {
-          @Override
-          public void handleMessage(Message msg) {
-              super.handleMessage(msg);
-              if(msg.what == UI_REQUEST) {
-                  switch (msg.arg1) {
-                      case UI_REQUEST_SET_MY_ID:
-                          mEtMyID.setText((String)msg.obj);
-                          break;
-                  }
-
-              }
-          }
-        };
-
-        Button mButtonGetID = (Button) findViewById(R.id.buttonGetID);
-        mButtonGetID.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Message m = mHandler.obtainMessage(HTTP_REQUEST, HTTP_REQUEST_ID, 0, null);
-                mHandler.sendMessage(m);
-            }
-        });
 
         mButtonConnect = (Button) findViewById(R.id.buttonConnect);
         mButtonConnect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mMyID = mEtMyID.getText().toString();
-                Log.i(TAG, "myID: " + mMyID);
+                mMyNick = mEtMyNick.getText().toString();
+                mCloudMedia = new CloudMedia(mContext, mMyNick);
 
-                mCloudMedia = new CloudMedia(mContext, mMyID);
-
-                mCloudMedia.connect("tcp://139.224.128.15:1883",
-                        new CloudMedia.SimpleActionListener() {
+                mCloudMedia.connect(new CloudMedia.SimpleActionListener() {
                     @Override
                     public boolean onResult(String result) {
                         Log.i(TAG, "connect result is: " + result);
@@ -123,8 +64,6 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 mYourID = mEtYourID.getText().toString();
-                Log.i(TAG, "Your ID: " + mYourID);
-
                 mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(mYourID);
 
                 mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
@@ -147,8 +86,7 @@ public class MainActivity extends AppCompatActivity {
         mButtonStart.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mRemoteMediaNode.startPushMedia("rtmp://xxx.xxx.xxx.xxx/app/name",
-                        new CloudMedia.SimpleActionListener() {
+                mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
                     @Override
                     public boolean onResult(String result) {
                         if(result.equalsIgnoreCase("OK")){
@@ -168,8 +106,7 @@ public class MainActivity extends AppCompatActivity {
         mButtonStop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mRemoteMediaNode.stopPushMedia("rtmp://xxx.xxx.xxx.xxx/app/name",
-                        new CloudMedia.SimpleActionListener() {
+                mRemoteMediaNode.stopPushMedia(new CloudMedia.SimpleActionListener() {
                     @Override
                     public boolean onResult(String result) {
                         if(result.equalsIgnoreCase("OK")){

@@ -18,9 +18,9 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/fab_margin"
             android:layout_marginLeft="@dimen/fab_margin"
-            android:text="My ID: "/>
+            android:text="My Nick: "/>
         <EditText
-            android:id="@+id/etMyID"
+            android:id="@+id/etMyNick"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="car123"
@@ -41,12 +41,6 @@
             android:layout_marginLeft="@dimen/fab_margin"
             android:layout_marginRight="@dimen/fab_margin"/>
 
-        <Button
-            android:id="@+id/buttonGetID"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/fab_margin"
-            android:text="get ID" />
 
         <Button
             android:id="@+id/buttonConnect"

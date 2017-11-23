@@ -31,73 +31,85 @@ public class CloudMedia {
     private P2PMqtt mExtMqttClient;
     private String mBrokerUrl;
     private  String mMyID;
+    private  String mMyNickName;
 
     /**
      * get uniqure ID from server.
      * NOTE: this function cannot be called from main thread!
      * @return uniqure id managed by a cloud server
      */
-    public static String getIDFromServer(){
-        URL url = null;
-        HttpURLConnection conn = null;
-        try {
-            url = new URL("http://139.224.128.15:8085/getID");
-            conn = (HttpURLConnection) url.openConnection();
+    private String getIDFromServer(){
+        if(false) {
+            URL url = null;
+            HttpURLConnection conn = null;
+            try {
+                url = new URL("http://139.224.128.15:8085/getID");
+                conn = (HttpURLConnection) url.openConnection();
 
-            conn.setRequestMethod("GET");
-            conn.setDoInput(true);
-            //conn.setRequestProperty("action", "getID");
-            conn.setUseCaches(false);
-            conn.setReadTimeout(8000);
-            conn.setConnectTimeout(8000);
+                conn.setRequestMethod("GET");
+                conn.setDoInput(true);
+                //conn.setRequestProperty("action", "getID");
+                conn.setUseCaches(false);
+                conn.setReadTimeout(8000);
+                conn.setConnectTimeout(8000);
 
-            int responseCode = conn.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                InputStream in = conn.getInputStream();
-                BufferedReader bufReader = new BufferedReader(new InputStreamReader(in));
+                int responseCode = conn.getResponseCode();
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    InputStream in = conn.getInputStream();
+                    BufferedReader bufReader = new BufferedReader(new InputStreamReader(in));
 
-                StringBuilder response = new StringBuilder();
-                String line = null;
-                while ((line = bufReader.readLine()) != null) {
-                    response.append(line);
+                    StringBuilder response = new StringBuilder();
+                    String line = null;
+                    while ((line = bufReader.readLine()) != null) {
+                        response.append(line);
+                    }
+                    Log.i(TAG, "get id from server: " + response.toString());
+
+                    return response.toString();
+                } else {
+                    Log.i(TAG, "http response error");
                 }
-                Log.i(TAG, "get id from server: " + response.toString());
 
-                return response.toString();
-            } else {
-                Log.i(TAG, "http response error");
+
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                if (conn != null) {
+                    conn.disconnect();
+                }
             }
 
-
-        }catch (MalformedURLException e){
-            e.printStackTrace();
-        }catch (IOException e){
-            e.printStackTrace();
-        }finally {
-            if(conn != null){
-                conn.disconnect();
-            }
+            return null;
+        } else {
+            return mMyNickName + System.nanoTime();
         }
-
-        return "eeeeee";
     }
-    public CloudMedia(Context context, String myID) {
+
+    private String getBrokerUrlFromServer(){
+        return "tcp://139.224.128.15:1883";
+    }
+
+
+    public CloudMedia(Context context) {
         mContext = context;
-        mMyID = myID;
+        mMyNickName = "Nick";
     }
 
-    public boolean connect(String brokerUrl, final SimpleActionListener listener) {
-        assert(brokerUrl != null);
+    public CloudMedia(Context context, String nickName) {
+        mContext = context;
+        mMyNickName = nickName;
+    }
+
+    public boolean connect(final SimpleActionListener listener) {
         assert(listener != null);
-        mBrokerUrl = brokerUrl;
+        mBrokerUrl = getBrokerUrlFromServer();
+        mMyID = getIDFromServer();
 
-        if(mMyID == null) {
-            //request a dynamic ID
-            mMyID = "puller";
-        }
-        mExtMqttClient = new P2PMqtt(mContext, mMyID, "12345");
+        mExtMqttClient = new P2PMqtt(mContext, mMyID, "12345", mMyNickName);
 
-        return mExtMqttClient.connect("tcp://139.224.128.15:1883",
+        return mExtMqttClient.connect(mBrokerUrl,
                 new P2PMqtt.IMqttRpcActionListener() {
             @Override
             public P2PMqtt.ResultCode onResult(JSONObject jrpc) {
