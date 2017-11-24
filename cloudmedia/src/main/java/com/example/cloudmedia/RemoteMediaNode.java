@@ -18,6 +18,7 @@ public class RemoteMediaNode{
     private String mWhoareyou;
     private P2PMqtt mExtMqttClient; //TODO: cycle reference
     private String mRtmpPublishUrl;
+    private String mStreamName;
 
     public static final String REQUEST_START_PUSH_MEDIA = "startPushMedia";
     public static final String REQUEST_STOP_PUSH_MEDIA = "stopPushMedia";
@@ -33,8 +34,16 @@ public class RemoteMediaNode{
     }
 
     private String generateRtmpPublishUrl(){
-        String streamName = mWhoareyou + System.nanoTime();
-        return "rtmp://video-center.alivecdn.com/cloudmedia/" + streamName + "?vhost=push.yangxudong.com";
+        mStreamName = mWhoareyou + System.nanoTime();
+        return "rtmp://video-center.alivecdn.com/cloudmedia/" + mStreamName + "?vhost=push.yangxudong.com";
+    }
+
+    public String getFlvPlayUrl() {
+        return "http://www.yangxudong.com/cloudmedia/" + mStreamName + ".flv";
+    }
+
+    public String getHlsPlayUrl() {
+        return "http://www.yangxudong.com/cloudmedia/" + mStreamName + ".m3u8";
     }
 
     public boolean startPushMedia(final CloudMedia.SimpleActionListener listener){

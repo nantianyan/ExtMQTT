@@ -1,7 +1,9 @@
 package com.example.democm;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -67,14 +69,16 @@ public class MainActivity extends AppCompatActivity {
             mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
             mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
                 @Override
-                public void onStartPushMedia(String params) {
+                public boolean onStartPushMedia(String params) {
                     Toast.makeText(mContext, "start push", Toast.LENGTH_LONG).show();
+                    return true;
                 }
             });
             mLocalMediaNode.setOnStopPushMediaActor(new LocalMediaNode.OnStopPushMedia() {
                 @Override
-                public void onStopPushMedia(String params) {
+                public boolean onStopPushMedia(String params) {
                     Toast.makeText(mContext, "stop push", Toast.LENGTH_LONG).show();
+                    return true;
                 }
             });
         } else {
@@ -149,9 +153,13 @@ public class MainActivity extends AppCompatActivity {
                                             mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
                                                 @Override
                                                 public boolean onResult(String result) {
-                                                    if(result.equalsIgnoreCase("OK")){
+                                                    //if(result.equalsIgnoreCase("OK")){
                                                         Log.i(TAG, "start push media is OK");
-                                                    }
+
+                                                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                                                        intent.setData(Uri.parse(mRemoteMediaNode.getFlvPlayUrl()));
+                                                        startActivity(intent);
+                                                    //}
                                                     return true;
                                                 }
                                             });

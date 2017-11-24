@@ -26,7 +26,11 @@ public class LocalMediaNode{
                 String params = jrpc.getString("params");
                 Log.d(TAG, "method:" + method);
                 if(mOnStartPushMediaActor != null) {
-                    mOnStartPushMediaActor.onStartPushMedia(params);
+                    if(mOnStartPushMediaActor.onStartPushMedia(params)) {
+                        return  "OK";
+                    } else {
+                        return "ERROR";
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -45,7 +49,11 @@ public class LocalMediaNode{
                 String params = jrpc.getString("params");
                 Log.d(TAG, "method:" + method);
                 if(mOnStopPushMediaActor != null) {
-                    mOnStopPushMediaActor.onStopPushMedia(params);
+                    if(mOnStopPushMediaActor.onStopPushMedia(params)){
+                        return "OK";
+                    }else {
+                        return "ERROR";
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -72,7 +80,7 @@ public class LocalMediaNode{
      */
     public interface OnStartPushMedia
     {
-        void onStartPushMedia(String params);
+        boolean onStartPushMedia(String params);
     }
 
     public void setOnStartPushMediaActor(OnStartPushMedia actor){
@@ -87,7 +95,7 @@ public class LocalMediaNode{
      */
     public interface OnStopPushMedia
     {
-        void onStopPushMedia(String params);
+        boolean onStopPushMedia(String params);
     }
 
     public void setOnStopPushMediaActor(OnStopPushMedia actor){
