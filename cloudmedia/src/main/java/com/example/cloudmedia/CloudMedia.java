@@ -21,6 +21,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by 阳旭东 on 2017/10/18.
@@ -93,11 +95,12 @@ public class CloudMedia {
     }
 
 
-    public boolean getNodesOnline(final CloudMedia.SimpleActionListener listener){
+    private boolean sendRequest(String targetID, String method,
+                                String params, final CloudMedia.SimpleActionListener listener) {
         P2PMqttAsyncRequest request = new P2PMqttAsyncRequest();
-        request.setWhoareyou("controller");
-        request.setMethodName("get_nodes_online");
-        request.setMethodParams("none");
+        request.setWhoareyou(targetID);
+        request.setMethodName(method);
+        request.setMethodParams(params);
         if(listener == null) {
             request.setListener(P2PMqttRequest.SIMPLE_LISTENER);
         } else {
@@ -108,25 +111,57 @@ public class CloudMedia {
                     try {
                         result = jrpc.getString("result");
                         Log.d(TAG, "jrpc's result is: " + result);
+
+                        if (listener.onResult(result)) {
+                            return P2PMqtt.ResultCode.ERROR_None;
+                        } else {
+                            return P2PMqtt.ResultCode.ERROR_Unknown;
+                        }
                     } catch (JSONException e) {
                         Log.d(TAG, "illeagle JSON!");
                         e.printStackTrace();
                     }
-                    if (listener.onResult(result)) {
-                        return P2PMqtt.ResultCode.ERROR_None;
-                    } else {
-                        return P2PMqtt.ResultCode.ERROR_Unknown;
-                    }
+
+                    return P2PMqtt.ResultCode.ERROR_None;
                 }
             });
         }
-
         if(mExtMqttClient.sendRequest(request)) {
             Log.d(TAG, "getNodesOnline is called succussfull!");
         } else {
             Log.d(TAG, "getNodesOnline is failed!");
         }
         return true;
+    }
+
+    public boolean putOnline(final CloudMedia.SimpleActionListener listener) {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date curDate = new Date(System.currentTimeMillis());
+            // String time = curDate.toString();
+            String strTime = formatter.format(curDate);
+            String params = "{\"whoami\":\"" + mMyID + "\"," +
+                    "\"time\":\"" + strTime + "\"," +
+                    "\"location\":\"longi lati\"," +
+                    "\"nick\":\"" + mMyNickName + "\"}";
+
+            return sendRequest("controller", "online", params, listener);
+    }
+
+    public boolean putOffline(final CloudMedia.SimpleActionListener listener) {
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date curDate = new Date(System.currentTimeMillis());
+        // String time = curDate.toString();
+        String strTime = formatter.format(curDate);
+        String params = "{\"whoami\":\"" + mMyID + "\"," +
+                "\"time\":\"" + strTime + "\"," +
+                "\"location\":\"longi lati\"," +
+                "\"nick\":\"" + mMyNickName + "\"}";
+
+        return sendRequest("controller", "offline", params, listener);
+    }
+
+    public boolean getNodesOnline(final CloudMedia.SimpleActionListener listener){
+        return sendRequest("controller", "get_nodes_online", "none", listener);
     }
 
     public CloudMedia(Context context) {

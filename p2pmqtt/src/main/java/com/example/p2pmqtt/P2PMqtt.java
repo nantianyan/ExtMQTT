@@ -98,7 +98,7 @@ public class P2PMqtt {
         return connect(host, null);
     }
 
-    public boolean connect(String host, IMqttRpcActionListener onlineCallback) {
+    public boolean connect(String host, final IMqttRpcActionListener onlineCallback) {
         mOnlineCallback = onlineCallback;
 
         mHost = host;
