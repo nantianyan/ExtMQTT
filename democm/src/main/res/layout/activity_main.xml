@@ -32,7 +32,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/fab_margin"
-            android:text="上线" />
+            android:text="连接中..."
+            android:enabled="false"/>
 
         <Button
             android:id="@+id/buttonGetOnlineNodes"

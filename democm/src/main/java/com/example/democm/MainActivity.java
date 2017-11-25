@@ -5,12 +5,7 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
 import android.view.Menu;
@@ -20,20 +15,16 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.cloudmedia.CloudMedia;
 import com.example.cloudmedia.LocalMediaNode;
 import com.example.cloudmedia.RemoteMediaNode;
-import com.example.p2pmqtt.P2PMqttRequest;
-import com.example.p2pmqtt.P2PMqttSyncRequest;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,70 +32,98 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "CloudMediaDemo";
     private final Context mContext = this;
     private CloudMedia mCloudMedia;
+    private boolean mIsOnline = false;
+
     private RemoteMediaNode mRemoteMediaNode;
     private LocalMediaNode mLocalMediaNode;
 
     private String mMyNick;
     private EditText mEtMyNick;
-    private Button mButtonConnect;
+    private Button mButtonOnline;
     private Button mButtonGetOnlineNodes;
     private ListView mListViewNodesOnline;
     private List<String> mNodesOnline = new ArrayList<String>();
 
-    private void putOnline(){
-        if(mCloudMedia == null) {
-            mMyNick = mEtMyNick.getText().toString();
-            mCloudMedia = new CloudMedia(mContext, mMyNick);
-
-            mCloudMedia.connect(new CloudMedia.SimpleActionListener() {
-                @Override
-                public boolean onResult(String result) {
-                    Log.i(TAG, "connect result is: " + result);
-                    mButtonConnect.setText("下线");
-                    mButtonGetOnlineNodes.setEnabled(true);
-                    return true;
-                }
-            });
-
-            mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
-            mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
-                @Override
-                public boolean onStartPushMedia(String params) {
-                    Toast.makeText(mContext, "start push", Toast.LENGTH_LONG).show();
-                    return true;
-                }
-            });
-            mLocalMediaNode.setOnStopPushMediaActor(new LocalMediaNode.OnStopPushMedia() {
-                @Override
-                public boolean onStopPushMedia(String params) {
-                    Toast.makeText(mContext, "stop push", Toast.LENGTH_LONG).show();
-                    return true;
-                }
-            });
-        } else {
-            mCloudMedia.putOffline(new CloudMedia.SimpleActionListener() {
-                @Override
-                public boolean onResult(String result) {
-                    Log.i(TAG, "offline OK");
-                    mButtonConnect.setEnabled(false);
-                    return true;
-                }
-            });
-        }
+    private void _putOnline() {
+        Log.d(TAG, "_putOnline");
+        mCloudMedia.putOnline(new CloudMedia.SimpleActionListener() {
+            @Override
+            public boolean onResult(String result) {
+                Log.i(TAG, "offline OK");
+                mButtonOnline.setText("下线");
+                mIsOnline = true;
+                return true;
+            }
+        });
     }
+    private void _putOffline() {
+        Log.d(TAG, "_putOffline");
+        mCloudMedia.putOffline(new CloudMedia.SimpleActionListener() {
+            @Override
+            public boolean onResult(String result) {
+                Log.i(TAG, "offline OK");
+                mButtonOnline.setText("上线");
+                mIsOnline = false;
+                return true;
+            }
+        });
+    }
+
+    private void initCloudMedia(){
+        mEtMyNick = (EditText)findViewById(R.id.etMyNick);
+        mMyNick = mEtMyNick.getText().toString();
+        mCloudMedia = new CloudMedia(mContext, mMyNick, CloudMedia.ROLE_PUSHER);
+
+        mCloudMedia.connect(new CloudMedia.SimpleActionListener() {
+            @Override
+            public boolean onResult(String result) {
+                Log.i(TAG, "connect result is: " + result);
+                mButtonOnline.setText("上线");
+                mButtonOnline.setEnabled(true);
+                mButtonGetOnlineNodes.setEnabled(true);
+                return true;
+            }
+        });
+
+        mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
+        mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
+            @Override
+            public boolean onStartPushMedia(String params) {
+                Toast.makeText(mContext, "start push", Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
+        mLocalMediaNode.setOnStopPushMediaActor(new LocalMediaNode.OnStopPushMedia() {
+            @Override
+            public boolean onStopPushMedia(String params) {
+                Toast.makeText(mContext, "stop push", Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mEtMyNick = (EditText)findViewById(R.id.etMyNick);
+        initCloudMedia();
+
         mListViewNodesOnline = (ListView) findViewById(R.id.listViewNodesOnline);
 
-        mButtonConnect = (Button) findViewById(R.id.buttonConnect);
-        mButtonConnect.setOnClickListener(new View.OnClickListener() {
+        mButtonOnline = (Button) findViewById(R.id.buttonConnect);
+        mButtonOnline.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                putOnline();
+                if (mCloudMedia != null) {
+                    if (mIsOnline) {
+                        _putOffline();
+                    } else {
+                        _putOnline();
+                    }
+                } else {
+                    Log.e(TAG, "CloudMedia has not been initialized.");
+                }
             }
         });
 
@@ -118,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                mCloudMedia.getNodesOnline(new CloudMedia.SimpleActionListener(){
+                mCloudMedia.getNodesOnline(CloudMedia.ROLE_PUSHER, new CloudMedia.SimpleActionListener(){
                     @Override
                     public boolean onResult(String result) {
                         Log.i(TAG, "getNodesOnline:");

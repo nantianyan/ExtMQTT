@@ -60,7 +60,6 @@ public class P2PMqtt {
         public void connectionLost(Throwable arg0) {
             Log.i(TAG, "connectionLost");
             mIsConnected = false;
-            mIsOnline = false;
         }
     };
 
@@ -78,9 +77,6 @@ public class P2PMqtt {
     private String mWhoamiPwd;
     private String mNickName;
     private boolean mIsConnected = false;
-    private boolean mIsOnline = false;
-
-    private IMqttRpcActionListener mOnlineCallback = null;
 
     public P2PMqtt(Context context) {
         this(context, "tester", "12345", "Nick");
@@ -99,8 +95,6 @@ public class P2PMqtt {
     }
 
     public boolean connect(String host, final IMqttRpcActionListener onlineCallback) {
-        mOnlineCallback = onlineCallback;
-
         mHost = host;
         mClientId = MqttClient.generateClientId();
         mClient = new MqttAndroidClient(mContext, mHost, mClientId);
@@ -131,7 +125,14 @@ public class P2PMqtt {
                         topic = mWhoami + "/+/reply";
                         MqttSubscribe(topic, 2);
 
-                        putOnline();
+                        // TODO: polish this
+                        try {
+                            String result = "{\"result\":\"OK\"}";
+                            JSONObject jrpcResult = new JSONObject(result);
+                            onlineCallback.onResult(jrpcResult);
+                        }catch (JSONException e){
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
@@ -149,49 +150,15 @@ public class P2PMqtt {
         return  true;
     }
 
-    private void putOnline() {
-        if(mClient.isConnected()) {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date curDate = new Date(System.currentTimeMillis());
-            // String time = curDate.toString();
-            String strTime = formatter.format(curDate);
-            String params = "{\"whoami\":\"" + mWhoami + "\"," +
-                    "\"time\":\"" + strTime + "\"," +
-                    "\"location\":\"longi lati\"," +
-                    "\"nick\":\"" + mNickName + "\"}";
-
-            sendRequest("controller", "online", params, new IMqttRpcActionListener() {
-                public ResultCode onResult(JSONObject jrpc) {
-                    Log.d(TAG, "in online result callback");
-                    String result = null;
-                    try {
-                        result = jrpc.getString("result");
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                    Log.d(TAG, "jrpc's result is: " + result);
-                    if (result.equalsIgnoreCase("OK")) {
-                        Log.i(TAG, "\t on line is OK!");
-                        mIsOnline = true;
-                    }
-                    if(mOnlineCallback != null) {
-                        Log.d(TAG, "on line callback is trigged");
-                        mOnlineCallback.onResult(jrpc);
-                    }
-                    return ResultCode.ERROR_None;
-                }
-            }, true);
-        } else {
-            Log.e(TAG, "cannot put it on line, make sure connect ok");
-        }
-    }
-
-    public void sendRequest(String whoareyou, String methodName, String methodParam){
-        sendRequest(whoareyou, methodName, methodParam, null);
+    public boolean sendRequest(P2PMqttRequest request) {
+        Log.d(TAG, "sendRequest 1");
+        sendRequest(request.getWhoareyou(), request.getMethodName(), request.getMethodParams(), request);
+        return request.waitComplete();
     }
 
     public void sendRequest(String whoareyou, String methodName, String methodParam, IMqttRpcActionListener listener) {
-        if(mIsOnline == false) {
+        Log.d(TAG, "sendRequest 2");
+        if(mIsConnected == false) {
             String info = "client is not online, so request:" + methodName + " is failed to send!";
             Toast.makeText(mContext, info, Toast.LENGTH_LONG).show();
         } else {
@@ -199,14 +166,8 @@ public class P2PMqtt {
         }
     }
 
-    public boolean sendSimpleRequest(P2PMqttSyncRequest request) {
-        sendRequest(request.getWhoareyou(), request.getMethodName(), request.getMethodParams(), request);
-        return request.waitComplete();
-    }
-
-    public boolean sendRequest(P2PMqttRequest request) {
-        sendRequest(request.getWhoareyou(), request.getMethodName(), request.getMethodParams(), request);
-        return request.waitComplete();
+    public void sendRequest(String whoareyou, String methodName, String methodParam){
+        sendRequest(whoareyou, methodName, methodParam, null);
     }
 
     private void sendRequest(String whoareyou, String methodName, String methodParam, IMqttRpcActionListener listener, boolean force){
@@ -290,7 +251,6 @@ public class P2PMqtt {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
         }
     }
 

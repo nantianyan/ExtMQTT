@@ -30,6 +30,12 @@ import java.util.Date;
 
 public class CloudMedia {
     private static final String TAG = "CloudMedia";
+    public static final String ROLE_ALL = "all";
+    public static final String ROLE_PULLER = "puller";
+    public static final String ROLE_PUSHER = "pusher";
+    public static final String ROLE_TEST = "tester";
+    public static final String ROLE_NONE = "none";
+    private String mRole = ROLE_NONE;
     private Context mContext;
     private P2PMqtt mExtMqttClient;
     private String mBrokerUrl;
@@ -97,6 +103,10 @@ public class CloudMedia {
 
     private boolean sendRequest(String targetID, String method,
                                 String params, final CloudMedia.SimpleActionListener listener) {
+        Log.d(TAG, "sendRequest to: " + targetID +
+                ", calling: " + method +
+                ", params: " + params);
+
         P2PMqttAsyncRequest request = new P2PMqttAsyncRequest();
         request.setWhoareyou(targetID);
         request.setMethodName(method);
@@ -126,12 +136,8 @@ public class CloudMedia {
                 }
             });
         }
-        if(mExtMqttClient.sendRequest(request)) {
-            Log.d(TAG, "getNodesOnline is called succussfull!");
-        } else {
-            Log.d(TAG, "getNodesOnline is failed!");
-        }
-        return true;
+
+        return mExtMqttClient.sendRequest(request);
     }
 
     public boolean putOnline(final CloudMedia.SimpleActionListener listener) {
@@ -142,7 +148,8 @@ public class CloudMedia {
             String params = "{\"whoami\":\"" + mMyID + "\"," +
                     "\"time\":\"" + strTime + "\"," +
                     "\"location\":\"longi lati\"," +
-                    "\"nick\":\"" + mMyNickName + "\"}";
+                    "\"nick\":\"" + mMyNickName + "\"," +
+                    "\"role\":\"" + mRole + "\"}";
 
             return sendRequest("controller", "online", params, listener);
     }
@@ -155,13 +162,15 @@ public class CloudMedia {
         String params = "{\"whoami\":\"" + mMyID + "\"," +
                 "\"time\":\"" + strTime + "\"," +
                 "\"location\":\"longi lati\"," +
-                "\"nick\":\"" + mMyNickName + "\"}";
+                "\"nick\":\"" + mMyNickName + "\"," +
+                "\"role\":\"" + mRole + "\"}";
 
         return sendRequest("controller", "offline", params, listener);
     }
 
-    public boolean getNodesOnline(final CloudMedia.SimpleActionListener listener){
-        return sendRequest("controller", "get_nodes_online", "none", listener);
+    public boolean getNodesOnline(String role, final CloudMedia.SimpleActionListener listener){
+        String parmas = "{\"role\":\"" + role + "\"}";
+        return sendRequest("controller", "get_nodes_online", parmas, listener);
     }
 
     public CloudMedia(Context context) {
@@ -172,6 +181,12 @@ public class CloudMedia {
     public CloudMedia(Context context, String nickName) {
         mContext = context;
         mMyNickName = nickName;
+    }
+
+    public CloudMedia(Context context, String nickName, String role) {
+        mContext = context;
+        mMyNickName = nickName;
+        mRole = role;  // better to user enum
     }
 
     public boolean connect(final SimpleActionListener listener) {
