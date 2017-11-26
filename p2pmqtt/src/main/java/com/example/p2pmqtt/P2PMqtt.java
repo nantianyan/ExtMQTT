@@ -125,6 +125,10 @@ public class P2PMqtt {
                         topic = mWhoami + "/+/reply";
                         MqttSubscribe(topic, 2);
 
+                        for(String key: mTopicHandler.keySet()) {
+                            MqttSubscribe(key, 2);
+                        }
+
                         // TODO: polish this
                         try {
                             String result = "{\"result\":\"OK\"}";
@@ -206,7 +210,11 @@ public class P2PMqtt {
     }
 
     public void installTopicHandler(String topic, MqttTopicHandler handler) {
+        Log.i(TAG, "install topic handler for:" + topic);
         mTopicHandler.put(topic, handler);
+        if(mIsConnected) {
+            MqttSubscribe(topic, 2);
+        } // else the topic is subscribed when connect success.
     }
 
     private void onMqttMessage(String topic, MqttMessage message) {
@@ -245,12 +253,7 @@ public class P2PMqtt {
                 e.printStackTrace();
             }
         } else if (mTopicHandler.containsKey(topic)) {
-            try {
-                JSONObject jrpc = new JSONObject(message.toString());
-                mTopicHandler.get(topic).onMqttMessage(jrpc);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            mTopicHandler.get(topic).onMqttMessage(message.toString());
         }
     }
 

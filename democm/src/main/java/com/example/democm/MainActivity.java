@@ -69,18 +69,92 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void _showOnlineNodes(String result){
+        Log.i(TAG, "_showOnlineNodes:");
+        Log.i(TAG, ">>> " + result);
+        try {
+            JSONArray jsonNodes = new JSONArray(result);
+            mNodesOnline.clear();
+            for(int i=0; i<jsonNodes.length(); i++){
+                JSONObject node = jsonNodes.getJSONObject(i);
+                String whoami = node.getString("whoami");
+                mNodesOnline.add(whoami);
+                Log.d(TAG, "whoami:" + whoami);
+            }
+
+            mListViewNodesOnline.setAdapter(new ArrayAdapter<String>(mContext,
+                    android.R.layout.simple_list_item_1,
+                    (String[])mNodesOnline.toArray(new String[mNodesOnline.size()])));
+
+            mListViewNodesOnline.setOnItemClickListener(
+                    new AdapterView.OnItemClickListener() {
+                        @Override
+                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                            Log.d(TAG, "您点击了第"+position+"个项目");
+                            Log.d(TAG, "whoami is:" + mNodesOnline.get(position));
+                            String yourID = mNodesOnline.get(position);
+
+                            view.setBackgroundColor(Color.RED);
+
+                            // to use singleton ?
+                            mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(yourID);
+
+                            mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
+                                @Override
+                                public boolean onResult(String result) {
+                                    //if(result.equalsIgnoreCase("OK")){
+                                    Log.i(TAG, "start push media is OK");
+
+                                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                                    intent.setData(Uri.parse(mRemoteMediaNode.getFlvPlayUrl()));
+                                    startActivity(intent);
+                                    //}
+                                    return true;
+                                }
+                            });
+                                            /*
+                                            mRemoteMediaNode.stopPushMedia(new CloudMedia.SimpleActionListener() {
+                                                @Override
+                                                public boolean onResult(String result) {
+                                                    if(result.equalsIgnoreCase("OK")){
+                                                        Log.i(TAG, "stop push media is OK");
+                                                    }
+                                                    return true;
+                                                }
+                                            });
+                                            */
+                        }
+                    }
+            );
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     private void initCloudMedia(){
         mEtMyNick = (EditText)findViewById(R.id.etMyNick);
         mMyNick = mEtMyNick.getText().toString();
         mCloudMedia = new CloudMedia(mContext, mMyNick, CloudMedia.ROLE_PUSHER);
 
+        mCloudMedia.setNodesStatusChangeListener(new CloudMedia.OnNodesStatusChange() {
+            @Override
+            public boolean OnNodesStatusChange(String jstr) {
+                Log.i(TAG, "OnNodesStatusChange");
+                _showOnlineNodes(jstr);
+                return true;
+            }
+        });
+
         mCloudMedia.connect(new CloudMedia.SimpleActionListener() {
             @Override
             public boolean onResult(String result) {
                 Log.i(TAG, "connect result is: " + result);
-                mButtonOnline.setText("上线");
+                mIsOnline = true;
+                mButtonOnline.setText("下线");
                 mButtonOnline.setEnabled(true);
-                mButtonGetOnlineNodes.setEnabled(true);
+
+                mButtonGetOnlineNodes.setText("自动模式中，此按钮未启动");
+                mButtonGetOnlineNodes.setEnabled(false);
                 return true;
             }
         });
@@ -140,66 +214,8 @@ public class MainActivity extends AppCompatActivity {
                 mCloudMedia.getNodesOnline(CloudMedia.ROLE_PUSHER, new CloudMedia.SimpleActionListener(){
                     @Override
                     public boolean onResult(String result) {
-                        Log.i(TAG, "getNodesOnline:");
-                        Log.i(TAG, ">>> " + result);
-                        try {
-                            JSONArray jsonNodes = new JSONArray(result);
-                            mNodesOnline.clear();
-                            for(int i=0; i<jsonNodes.length(); i++){
-                                JSONObject node = jsonNodes.getJSONObject(i);
-                                String whoami = node.getString("whoami");
-                                mNodesOnline.add(whoami);
-                                Log.d(TAG, "whoami:" + whoami);
-                            }
-
-                            mListViewNodesOnline.setAdapter(new ArrayAdapter<String>(mContext,
-                                    android.R.layout.simple_list_item_1,
-                                    (String[])mNodesOnline.toArray(new String[mNodesOnline.size()])));
-
-                            mListViewNodesOnline.setOnItemClickListener(
-                                    new AdapterView.OnItemClickListener() {
-                                        @Override
-                                        public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                                            Log.d(TAG, "您点击了第"+position+"个项目");
-                                            Log.d(TAG, "whoami is:" + mNodesOnline.get(position));
-                                            String yourID = mNodesOnline.get(position);
-
-                                            view.setBackgroundColor(Color.RED);
-
-                                            // to use singleton ?
-                                            mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(yourID);
-
-                                            mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
-                                                @Override
-                                                public boolean onResult(String result) {
-                                                    //if(result.equalsIgnoreCase("OK")){
-                                                        Log.i(TAG, "start push media is OK");
-
-                                                        Intent intent = new Intent(Intent.ACTION_VIEW);
-                                                        intent.setData(Uri.parse(mRemoteMediaNode.getFlvPlayUrl()));
-                                                        startActivity(intent);
-                                                    //}
-                                                    return true;
-                                                }
-                                            });
-                                            /*
-                                            mRemoteMediaNode.stopPushMedia(new CloudMedia.SimpleActionListener() {
-                                                @Override
-                                                public boolean onResult(String result) {
-                                                    if(result.equalsIgnoreCase("OK")){
-                                                        Log.i(TAG, "stop push media is OK");
-                                                    }
-                                                    return true;
-                                                }
-                                            });
-                                            */
-                                        }
-                                    }
-                            );
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-
+                        Log.i(TAG, "onResult of getNodesOnline");
+                        _showOnlineNodes(result);
                         return true;
                     }
                 });

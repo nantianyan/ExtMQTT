@@ -104,7 +104,4 @@ public class LocalMediaNode{
 
     private OnStopPushMedia mOnStopPushMediaActor;
 
-    void updateStatus(){
-        // nothing yet
-    }
 }

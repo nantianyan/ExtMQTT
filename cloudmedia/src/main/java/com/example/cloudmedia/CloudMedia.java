@@ -6,6 +6,7 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
 
+import com.example.p2pmqtt.MqttTopicHandler;
 import com.example.p2pmqtt.P2PMqtt;
 import com.example.p2pmqtt.P2PMqttAsyncRequest;
 import com.example.p2pmqtt.P2PMqttRequest;
@@ -36,6 +37,9 @@ public class CloudMedia {
     public static final String ROLE_TEST = "tester";
     public static final String ROLE_NONE = "none";
     private String mRole = ROLE_NONE;
+    public static final String TOPIC_NODES_ONLINE = "cm/nodes_online/"; // + role
+    public static final String TOPIC_PUSHER_ONLINE = TOPIC_NODES_ONLINE + ROLE_PUSHER;
+
     private Context mContext;
     private P2PMqtt mExtMqttClient;
     private String mBrokerUrl;
@@ -174,27 +178,26 @@ public class CloudMedia {
     }
 
     public CloudMedia(Context context) {
-        mContext = context;
-        mMyNickName = "Nick";
+        new CloudMedia(context, "Nick", CloudMedia.ROLE_NONE);
     }
 
     public CloudMedia(Context context, String nickName) {
-        mContext = context;
-        mMyNickName = nickName;
+        new CloudMedia(context, nickName, CloudMedia.ROLE_NONE);
     }
 
     public CloudMedia(Context context, String nickName, String role) {
         mContext = context;
         mMyNickName = nickName;
         mRole = role;  // better to user enum
-    }
 
-    public boolean connect(final SimpleActionListener listener) {
-        assert(listener != null);
         mBrokerUrl = getBrokerUrlFromServer();
         mMyID = getIDFromServer();
 
         mExtMqttClient = new P2PMqtt(mContext, mMyID, "12345", mMyNickName);
+    }
+
+    public boolean connect(final SimpleActionListener listener) {
+        assert(listener != null);
 
         return mExtMqttClient.connect(mBrokerUrl,
                 new P2PMqtt.IMqttRpcActionListener() {
@@ -235,5 +238,23 @@ public class CloudMedia {
 
     public interface SimpleActionListener {
         boolean onResult(String result);
+    }
+
+    /**
+     * Interface definition for listener of nodes status changes
+     * such as online/offline
+     */
+    public interface OnNodesStatusChange{
+        boolean OnNodesStatusChange(String jstr);
+    }
+
+
+    public void setNodesStatusChangeListener(final OnNodesStatusChange listener) {
+        mExtMqttClient.installTopicHandler(TOPIC_PUSHER_ONLINE, new MqttTopicHandler() {
+            @Override
+            public void onMqttMessage(String jstr) {
+                listener.OnNodesStatusChange(jstr);
+            }
+        });
     }
 }
