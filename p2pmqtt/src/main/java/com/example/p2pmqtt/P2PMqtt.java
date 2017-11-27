@@ -73,19 +73,17 @@ public class P2PMqtt {
 
     private String mWhoami;
     private String mWhoamiPwd;
-    private String mNickName;
     private boolean mIsConnected = false;
 
     public P2PMqtt(Context context) {
-        this(context, "tester", "12345", "Nick");
+        this(context, "tester", "12345");
     }
 
-    public P2PMqtt(Context context, String whoami, String password, String nickName) {
+    public P2PMqtt(Context context, String whoami, String password) {
         //TODO:  regist whoami and password in specific module, not here
         mContext = context;
         mWhoami = whoami;
         mWhoamiPwd = password;
-        mNickName = nickName;
     }
 
     public boolean connect(String host) {
@@ -180,10 +178,6 @@ public class P2PMqtt {
             if(listener != null) {
                 Log.d(TAG, "add listener for id: " + id);
                 mActionListener.put(id, listener);
-            }
-
-            if(!methodParam.startsWith("{")) {
-                methodParam = "\"" + methodParam + "\"";
             }
 
             /*
@@ -306,7 +300,7 @@ public class P2PMqtt {
             dst = makeKeyValueString(dst, "method", method);
             dst = makeKeyValueString(dst, "params", params);
             dst = makeKeyValueString(dst, "id", id);
-            return putJsonBrace(dst);
+            return addJsonBrace(dst);
         }
 
         public static String makeKeyValueString(String dst, String key, String value) {
@@ -333,7 +327,7 @@ public class P2PMqtt {
             }
         }
 
-        public static String putJsonBrace(String dst){
+        public static String addJsonBrace(String dst){
             return "{" + dst + "}";
         }
     }

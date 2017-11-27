@@ -1,16 +1,12 @@
 package com.example.cloudmedia;
 
 import android.content.Context;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Message;
 import android.util.Log;
 
 import com.example.p2pmqtt.MqttTopicHandler;
 import com.example.p2pmqtt.P2PMqtt;
 import com.example.p2pmqtt.P2PMqttAsyncRequest;
 import com.example.p2pmqtt.P2PMqttRequest;
-import com.example.p2pmqtt.P2PMqttSyncRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,7 +41,6 @@ public class CloudMedia {
     private P2PMqtt mExtMqttClient;
     private String mBrokerUrl;
     private  String mMyID;
-    private  String mMyNickName;
 
     /**
      * get uniqure ID from server.
@@ -97,7 +92,7 @@ public class CloudMedia {
 
             return null;
         } else {
-            return mMyNickName + System.nanoTime();
+            return "CloudMedia_" + System.nanoTime();
         }
     }
 
@@ -145,7 +140,7 @@ public class CloudMedia {
         return mExtMqttClient.sendRequest(request);
     }
 
-    public boolean putOnline(final CloudMedia.SimpleActionListener listener) {
+    public boolean putOnline(String nickName, String role, final CloudMedia.SimpleActionListener listener) {
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Date curDate = new Date(System.currentTimeMillis());
             // String time = curDate.toString();
@@ -161,14 +156,14 @@ public class CloudMedia {
             params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", mMyID);
             params = P2PMqtt.MyJsonString.makeKeyValueString(params, "time", strTime);
             params = P2PMqtt.MyJsonString.makeKeyValueString(params, "location", "none");
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "nick", mMyNickName);
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", mRole);
-            params = P2PMqtt.MyJsonString.putJsonBrace(params);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "nick", nickName);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", role);
+            params = P2PMqtt.MyJsonString.addJsonBrace(params);
 
             return sendRequest("controller", "online", params, listener);
     }
 
-    public boolean putOffline(final CloudMedia.SimpleActionListener listener) {
+    public boolean putOffline(String nickName, String role, final CloudMedia.SimpleActionListener listener) {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date curDate = new Date(System.currentTimeMillis());
         // String time = curDate.toString();
@@ -184,9 +179,9 @@ public class CloudMedia {
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", mMyID);
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "time", strTime);
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "location", "none");
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "nick", mMyNickName);
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", mRole);
-        params = P2PMqtt.MyJsonString.putJsonBrace(params);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "nick", nickName);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", role);
+        params = P2PMqtt.MyJsonString.addJsonBrace(params);
 
         return sendRequest("controller", "offline", params, listener);
     }
@@ -195,27 +190,17 @@ public class CloudMedia {
         //String params = "{\"role\":\"" + role + "\"}";
         String params = "";
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", role);
-        params = P2PMqtt.MyJsonString.putJsonBrace(params);
+        params = P2PMqtt.MyJsonString.addJsonBrace(params);
         return sendRequest("controller", "get_nodes_online", params, listener);
     }
 
     public CloudMedia(Context context) {
-        new CloudMedia(context, "Nick", CloudMedia.ROLE_NONE);
-    }
-
-    public CloudMedia(Context context, String nickName) {
-        new CloudMedia(context, nickName, CloudMedia.ROLE_NONE);
-    }
-
-    public CloudMedia(Context context, String nickName, String role) {
         mContext = context;
-        mMyNickName = nickName;
-        mRole = role;  // better to user enum
 
         mBrokerUrl = getBrokerUrlFromServer();
         mMyID = getIDFromServer();
 
-        mExtMqttClient = new P2PMqtt(mContext, mMyID, "12345", mMyNickName);
+        mExtMqttClient = new P2PMqtt(mContext, mMyID, "12345");
     }
 
     public boolean connect(final SimpleActionListener listener) {

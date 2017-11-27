@@ -35,7 +35,15 @@ public class RemoteMediaNode{
 
     private String generateRtmpPublishUrl(){
         mStreamName = mWhoareyou + System.nanoTime();
-        return "rtmp://video-center.alivecdn.com/cloudmedia/" + mStreamName + "?vhost=push.yangxudong.com";
+        //return "rtmp://video-center.alivecdn.com/cloudmedia/" + mStreamName + "?vhost=push.yangxudong.com";
+        return "rtmp://video-center.alivecdn.com/cloudmedia/" + mWhoareyou + "?vhost=push.yangxudong.com";
+
+        //return "rtmp://192.168.199.56:1935/live/livestream";
+        //return "rtmp://video-center.alivecdn.com/AppName/StreamName?vhost=push.yangxudong.com";
+    }
+
+    public String getRtmpPlayUrl() {
+        return "rtmp://192.168.199.56:1935/live/livestream";
     }
 
     public String getFlvPlayUrl() {
@@ -47,12 +55,17 @@ public class RemoteMediaNode{
     }
 
     public boolean startPushMedia(final CloudMedia.SimpleActionListener listener){
-        String url = mRtmpPublishUrl;
+        //String url = mRtmpPublishUrl;
+
+        String params = "";
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "url", mRtmpPublishUrl);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "expire_time", "100s");
+        params = P2PMqtt.MyJsonString.addJsonBrace(params);
 
         P2PMqttAsyncRequest request = new P2PMqttAsyncRequest();
         request.setWhoareyou(mWhoareyou);
         request.setMethodName(REQUEST_START_PUSH_MEDIA);
-        request.setMethodParams(url);
+        request.setMethodParams(params);
         if(listener == null)
             request.setListener(P2PMqttRequest.SIMPLE_LISTENER);
         else {

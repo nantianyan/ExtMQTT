@@ -23,7 +23,7 @@
             android:id="@+id/etMyNick"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="car123"
+            android:text="GOOD_NAME"
             android:layout_marginLeft="@dimen/fab_margin"
             android:layout_marginRight="@dimen/fab_margin"/>
 

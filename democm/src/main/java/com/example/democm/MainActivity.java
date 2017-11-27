@@ -42,11 +42,32 @@ public class MainActivity extends AppCompatActivity {
     private Button mButtonOnline;
     private Button mButtonGetOnlineNodes;
     private ListView mListViewNodesOnline;
-    private List<String> mNodesOnline = new ArrayList<String>();
+    private final class NodesInfo{
+        public List<String> mNodesOnline = new ArrayList<String>();
+        public List<String> mNodesID = new ArrayList<String>();
+        public List<String> mNodesNick = new ArrayList<String>();
+        public int size() {
+            return mNodesID.size();
+        }
+        public void clear(){
+            mNodesID.clear();
+            mNodesNick.clear();
+            mNodesOnline.clear();
+        }
+        public void add(String nick, String ID) {
+            Log.d(TAG, "add:");
+            Log.d(TAG, "\twhoami:" + ID);
+            Log.d(TAG, "\tnick:" + nick);
+            mNodesID.add(ID);
+            mNodesNick.add(nick);
+            mNodesOnline.add(nick + " (" + ID + ")");
+        }
+    }
+    private NodesInfo mNodesInfo = new NodesInfo();
 
     private void _putOnline() {
         Log.d(TAG, "_putOnline");
-        mCloudMedia.putOnline(new CloudMedia.SimpleActionListener() {
+        mCloudMedia.putOnline(mMyNick, CloudMedia.ROLE_PUSHER, new CloudMedia.SimpleActionListener() {
             @Override
             public boolean onResult(String result) {
                 Log.i(TAG, "online OK");
@@ -58,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void _putOffline() {
         Log.d(TAG, "_putOffline");
-        mCloudMedia.putOffline(new CloudMedia.SimpleActionListener() {
+        mCloudMedia.putOffline(mMyNick, CloudMedia.ROLE_PUSHER, new CloudMedia.SimpleActionListener() {
             @Override
             public boolean onResult(String result) {
                 Log.i(TAG, "offline OK");
@@ -74,25 +95,25 @@ public class MainActivity extends AppCompatActivity {
         Log.i(TAG, ">>> " + result);
         try {
             JSONArray jsonNodes = new JSONArray(result);
-            mNodesOnline.clear();
+            mNodesInfo.clear();
             for(int i=0; i<jsonNodes.length(); i++){
                 JSONObject node = jsonNodes.getJSONObject(i);
                 String whoami = node.getString("whoami");
-                mNodesOnline.add(whoami);
-                Log.d(TAG, "whoami:" + whoami);
+                String nick = node.getString("nick");
+                mNodesInfo.add(nick, whoami);
             }
 
             mListViewNodesOnline.setAdapter(new ArrayAdapter<String>(mContext,
                     android.R.layout.simple_list_item_1,
-                    (String[])mNodesOnline.toArray(new String[mNodesOnline.size()])));
+                    (String[])mNodesInfo.mNodesOnline.toArray(new String[mNodesInfo.size()])));
 
             mListViewNodesOnline.setOnItemClickListener(
                     new AdapterView.OnItemClickListener() {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                             Log.d(TAG, "您点击了第"+position+"个项目");
-                            Log.d(TAG, "whoami is:" + mNodesOnline.get(position));
-                            String yourID = mNodesOnline.get(position);
+                            Log.d(TAG, "whoami is:" + mNodesInfo.mNodesID.get(position));
+                            String yourID = mNodesInfo.mNodesID.get(position);
 
                             view.setBackgroundColor(Color.RED);
 
@@ -134,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
     private void initCloudMedia(){
         mEtMyNick = (EditText)findViewById(R.id.etMyNick);
         mMyNick = mEtMyNick.getText().toString();
-        mCloudMedia = new CloudMedia(mContext, mMyNick, CloudMedia.ROLE_PUSHER);
+        mCloudMedia = new CloudMedia(mContext);
 
         mCloudMedia.setNodesStatusChangeListener(new CloudMedia.OnNodesStatusChange() {
             @Override
