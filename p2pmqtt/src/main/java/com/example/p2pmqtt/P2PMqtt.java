@@ -16,9 +16,7 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.Date;
 import java.util.HashMap;
-import java.text.SimpleDateFormat;
 
 /**
  * Created by 阳旭东 on 2017/9/7.
@@ -188,12 +186,15 @@ public class P2PMqtt {
                 methodParam = "\"" + methodParam + "\"";
             }
 
+            /*
             String payload = "{";
             payload = payload + "\"jsonrpc\":\"2.0\",";
             payload = payload + "\"method\":\"" + methodName + "\",";
             payload = payload + "\"params\":" + methodParam + ",";
             payload = payload + "\"id\":" + id;
             payload = payload + "}";
+            */
+            String payload = MyJsonString.makeJrpcString(methodName, methodParam, id);
 
             String topic = whoareyou + "/" + mWhoami + "/request";
 
@@ -292,6 +293,48 @@ public class P2PMqtt {
             mClient.disconnect();
         } catch (MqttException e) {
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * this is a util tool to make String about json rpc
+     */
+    public static class MyJsonString{
+
+        public static String makeJrpcString(String method, String params, String id) {
+            String dst = "";
+            dst = makeKeyValueString(dst, "method", method);
+            dst = makeKeyValueString(dst, "params", params);
+            dst = makeKeyValueString(dst, "id", id);
+            return putJsonBrace(dst);
+        }
+
+        public static String makeKeyValueString(String dst, String key, String value) {
+            if(value.charAt(0) == '{') {
+                return putJsonString(dst, key, value);
+            } else {
+                return putString(dst, key, value);
+            }
+        }
+
+        private static String putString(String dst, String key, String value) {
+            if(dst.length() == 0) {
+                return "\"" + key + "\":\"" + value + "\"";
+            } else {
+                return dst + ",\"" + key + "\":\"" + value + "\"";
+            }
+        }
+
+        private static String putJsonString(String dst, String key, String value) {
+            if(dst.length() == 0) {
+                return "\"" + key + "\":" + value;
+            } else {
+                return dst + ",\"" + key + "\":" + value;
+            }
+        }
+
+        public static String putJsonBrace(String dst){
+            return "{" + dst + "}";
         }
     }
 }

@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
         mCloudMedia.putOnline(new CloudMedia.SimpleActionListener() {
             @Override
             public boolean onResult(String result) {
-                Log.i(TAG, "offline OK");
+                Log.i(TAG, "online OK");
                 mButtonOnline.setText("下线");
                 mIsOnline = true;
                 return true;
@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
                                     Log.i(TAG, "start push media is OK");
 
                                     Intent intent = new Intent(Intent.ACTION_VIEW);
-                                    intent.setData(Uri.parse(mRemoteMediaNode.getFlvPlayUrl()));
+                                    intent.setDataAndType(Uri.parse(mRemoteMediaNode.getFlvPlayUrl()), "video/flv");
                                     startActivity(intent);
                                     //}
                                     return true;
@@ -149,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onResult(String result) {
                 Log.i(TAG, "connect result is: " + result);
+                _putOnline();
                 mIsOnline = true;
                 mButtonOnline.setText("下线");
                 mButtonOnline.setEnabled(true);
@@ -158,6 +159,9 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+
+
+
 
         mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
         mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {

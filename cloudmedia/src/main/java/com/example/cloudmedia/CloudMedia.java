@@ -25,6 +25,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+
 /**
  * Created by 阳旭东 on 2017/10/18.
  */
@@ -149,11 +150,20 @@ public class CloudMedia {
             Date curDate = new Date(System.currentTimeMillis());
             // String time = curDate.toString();
             String strTime = formatter.format(curDate);
+            /*
             String params = "{\"whoami\":\"" + mMyID + "\"," +
                     "\"time\":\"" + strTime + "\"," +
                     "\"location\":\"longi lati\"," +
                     "\"nick\":\"" + mMyNickName + "\"," +
                     "\"role\":\"" + mRole + "\"}";
+            */
+            String params = "";
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", mMyID);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "time", strTime);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "location", "none");
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "nick", mMyNickName);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", mRole);
+            params = P2PMqtt.MyJsonString.putJsonBrace(params);
 
             return sendRequest("controller", "online", params, listener);
     }
@@ -163,18 +173,30 @@ public class CloudMedia {
         Date curDate = new Date(System.currentTimeMillis());
         // String time = curDate.toString();
         String strTime = formatter.format(curDate);
+        /*
         String params = "{\"whoami\":\"" + mMyID + "\"," +
                 "\"time\":\"" + strTime + "\"," +
                 "\"location\":\"longi lati\"," +
                 "\"nick\":\"" + mMyNickName + "\"," +
                 "\"role\":\"" + mRole + "\"}";
+        */
+        String params = "";
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", mMyID);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "time", strTime);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "location", "none");
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "nick", mMyNickName);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", mRole);
+        params = P2PMqtt.MyJsonString.putJsonBrace(params);
 
         return sendRequest("controller", "offline", params, listener);
     }
 
     public boolean getNodesOnline(String role, final CloudMedia.SimpleActionListener listener){
-        String parmas = "{\"role\":\"" + role + "\"}";
-        return sendRequest("controller", "get_nodes_online", parmas, listener);
+        //String params = "{\"role\":\"" + role + "\"}";
+        String params = "";
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", role);
+        params = P2PMqtt.MyJsonString.putJsonBrace(params);
+        return sendRequest("controller", "get_nodes_online", params, listener);
     }
 
     public CloudMedia(Context context) {
