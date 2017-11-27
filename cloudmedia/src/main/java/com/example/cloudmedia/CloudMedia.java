@@ -34,8 +34,8 @@ public class CloudMedia {
     public static final String ROLE_TEST = "tester";
     public static final String ROLE_NONE = "none";
     private String mRole = ROLE_NONE;
-    public static final String TOPIC_NODES_ONLINE = "cm/nodes_online/"; // + role
-    public static final String TOPIC_PUSHER_ONLINE = TOPIC_NODES_ONLINE + ROLE_PUSHER;
+    public static final String TOPIC_NODES_ONLINE = "/nodes_online/cm"; // role +
+    public static final String TOPIC_PUSHER_ONLINE = ROLE_PUSHER + TOPIC_NODES_ONLINE;
 
     private Context mContext;
     private P2PMqtt mExtMqttClient;
