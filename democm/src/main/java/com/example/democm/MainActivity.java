@@ -67,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void _putOnline() {
         Log.d(TAG, "_putOnline");
-        mCloudMedia.putOnline(mMyNick, CloudMedia.ROLE_PUSHER, new CloudMedia.SimpleActionListener() {
+        mCloudMedia.putOnline(mMyNick, CloudMedia.CMRole.ROLE_PUSHER, new CloudMedia.SimpleActionListener() {
             @Override
             public boolean onResult(String result) {
                 Log.i(TAG, "online OK");
@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
     }
     private void _putOffline() {
         Log.d(TAG, "_putOffline");
-        mCloudMedia.putOffline(mMyNick, CloudMedia.ROLE_PUSHER, new CloudMedia.SimpleActionListener() {
+        mCloudMedia.putOffline(mMyNick, CloudMedia.CMRole.ROLE_PUSHER, new CloudMedia.SimpleActionListener() {
             @Override
             public boolean onResult(String result) {
                 Log.i(TAG, "offline OK");
@@ -111,14 +111,24 @@ public class MainActivity extends AppCompatActivity {
                     new AdapterView.OnItemClickListener() {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            Log.d(TAG, "您点击了第"+position+"个项目");
-                            Log.d(TAG, "whoami is:" + mNodesInfo.mNodesID.get(position));
+                            Log.d(TAG, "Clicke item: "+position);
+                            Log.d(TAG, "the item's ID is:" + mNodesInfo.mNodesID.get(position));
                             String yourID = mNodesInfo.mNodesID.get(position);
 
                             view.setBackgroundColor(Color.RED);
 
                             // to use singleton ?
                             mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(yourID);
+
+                            /*
+                            mCloudMedia.updateMyStatus(CloudMedia.CMStatus.PUSHING, new CloudMedia.SimpleActionListener() {
+                                @Override
+                                public boolean onResult(String result) {
+                                    Log.d(TAG, "update status ok");
+                                    return true;
+                                }
+                            });
+                            */
 
                             mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
                                 @Override
@@ -133,17 +143,18 @@ public class MainActivity extends AppCompatActivity {
                                     return true;
                                 }
                             });
-                                            /*
-                                            mRemoteMediaNode.stopPushMedia(new CloudMedia.SimpleActionListener() {
-                                                @Override
-                                                public boolean onResult(String result) {
-                                                    if(result.equalsIgnoreCase("OK")){
-                                                        Log.i(TAG, "stop push media is OK");
-                                                    }
-                                                    return true;
-                                                }
-                                            });
-                                            */
+
+                            /*
+                            mRemoteMediaNode.stopPushMedia(new CloudMedia.SimpleActionListener() {
+                                @Override
+                                public boolean onResult(String result) {
+                                    if(result.equalsIgnoreCase("OK")){
+                                        Log.i(TAG, "stop push media is OK");
+                                    }
+                                    return true;
+                                }
+                            });
+                            */
                         }
                     }
             );
@@ -176,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                 mButtonOnline.setEnabled(true);
 
                 mButtonGetOnlineNodes.setText("自动模式中，此按钮未启动");
-                mButtonGetOnlineNodes.setEnabled(false);
+                mButtonGetOnlineNodes.setEnabled(true);
                 return true;
             }
         });
@@ -236,10 +247,10 @@ public class MainActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
 
-                mCloudMedia.getNodesOnline(CloudMedia.ROLE_PUSHER, new CloudMedia.SimpleActionListener(){
+                mCloudMedia.findRolesOnline(CloudMedia.CMRole.ROLE_PUSHER, new CloudMedia.SimpleActionListener(){
                     @Override
                     public boolean onResult(String result) {
-                        Log.i(TAG, "onResult of getNodesOnline");
+                        Log.i(TAG, "onResult of findRolesOnline");
                         _showOnlineNodes(result);
                         return true;
                     }

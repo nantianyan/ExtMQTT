@@ -28,19 +28,52 @@ import java.util.Date;
 
 public class CloudMedia {
     private static final String TAG = "CloudMedia";
-    public static final String ROLE_ALL = "all";
-    public static final String ROLE_PULLER = "puller";
-    public static final String ROLE_PUSHER = "pusher";
-    public static final String ROLE_TEST = "tester";
-    public static final String ROLE_NONE = "none";
-    private String mRole = ROLE_NONE;
+    private String mRole = CMRole.ROLE_NONE.str();
     public static final String TOPIC_NODES_ONLINE = "/nodes_online/cm"; // role +
-    public static final String TOPIC_PUSHER_ONLINE = ROLE_PUSHER + TOPIC_NODES_ONLINE;
+    public static final String TOPIC_PUSHER_ONLINE = CMRole.ROLE_PUSHER.str() + TOPIC_NODES_ONLINE;
 
     private Context mContext;
     private P2PMqtt mExtMqttClient;
     private String mBrokerUrl;
     private  String mMyID;
+
+    public enum CMStatus{
+        PUSHING,
+        PULLING;
+    }
+
+    public enum CMRole{
+        ROLE_ALL("all"),
+        ROLE_PULLER("puller"),
+        ROLE_PUSHER("pusher"),
+        ROLE_TEST("tester"),
+        ROLE_NONE("none");
+
+        private final String mRoleName;
+        CMRole(String roleName) {
+            this.mRoleName = roleName;
+        }
+        public String str() {
+            return this.mRoleName;
+        }
+    }
+
+    public enum CMField{
+        ID("whoami"),
+        TIME("time"),
+        LOCATION("location"),
+        NICK("nick"),
+        ROLE("role"),
+        STATUS("status");
+
+        private final String mFiledName;
+        CMField(String filedName) {
+            this.mFiledName = filedName;
+        }
+        public String str(){
+            return this.mFiledName;
+        }
+    }
 
     /**
      * get uniqure ID from server.
@@ -100,8 +133,7 @@ public class CloudMedia {
         return "tcp://139.224.128.15:1883";
     }
 
-
-    private boolean sendRequest(String targetID, String method,
+    public boolean sendRequest(String targetID, String method,
                                 String params, final CloudMedia.SimpleActionListener listener) {
         Log.d(TAG, "sendRequest to: " + targetID +
                 ", calling: " + method +
@@ -140,58 +172,78 @@ public class CloudMedia {
         return mExtMqttClient.sendRequest(request);
     }
 
-    public boolean putOnline(String nickName, String role, final CloudMedia.SimpleActionListener listener) {
+    public boolean putOnline(String nickName, CMRole role, final CloudMedia.SimpleActionListener listener) {
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             Date curDate = new Date(System.currentTimeMillis());
             // String time = curDate.toString();
             String strTime = formatter.format(curDate);
-            /*
-            String params = "{\"whoami\":\"" + mMyID + "\"," +
-                    "\"time\":\"" + strTime + "\"," +
-                    "\"location\":\"longi lati\"," +
-                    "\"nick\":\"" + mMyNickName + "\"," +
-                    "\"role\":\"" + mRole + "\"}";
-            */
+
             String params = "";
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", mMyID);
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "time", strTime);
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "location", "none");
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "nick", nickName);
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", role);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ID.str(), mMyID);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.TIME.str(), strTime);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.LOCATION.str(), "none");
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.NICK.str(), nickName);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ROLE.str(), role.str());
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.STATUS.str(), "online");
             params = P2PMqtt.MyJsonString.addJsonBrace(params);
 
             return sendRequest("controller", "online", params, listener);
     }
 
-    public boolean putOffline(String nickName, String role, final CloudMedia.SimpleActionListener listener) {
+    public boolean putOffline(String nickName, CMRole role, final CloudMedia.SimpleActionListener listener) {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date curDate = new Date(System.currentTimeMillis());
         // String time = curDate.toString();
         String strTime = formatter.format(curDate);
-        /*
-        String params = "{\"whoami\":\"" + mMyID + "\"," +
-                "\"time\":\"" + strTime + "\"," +
-                "\"location\":\"longi lati\"," +
-                "\"nick\":\"" + mMyNickName + "\"," +
-                "\"role\":\"" + mRole + "\"}";
-        */
+
         String params = "";
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", mMyID);
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "time", strTime);
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "location", "none");
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "nick", nickName);
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", role);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ID.str(), mMyID);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.TIME.str(), strTime);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.LOCATION.str(), "none");
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.NICK.str(), nickName);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ROLE.str(), role.str());
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.STATUS.str(), "offline");
         params = P2PMqtt.MyJsonString.addJsonBrace(params);
 
         return sendRequest("controller", "offline", params, listener);
     }
 
-    public boolean getNodesOnline(String role, final CloudMedia.SimpleActionListener listener){
-        //String params = "{\"role\":\"" + role + "\"}";
+    public boolean updateMyStatus(CMStatus status, final SimpleActionListener listener) {
+        updateCMField(CMField.STATUS.str(), status.toString().toLowerCase(), listener);
+        return true;
+    }
+
+    private boolean updateCMField(String filed, String newValue, final SimpleActionListener listener) {
         String params = "";
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", role);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", mMyID);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "field", filed);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "value", newValue);
         params = P2PMqtt.MyJsonString.addJsonBrace(params);
-        return sendRequest("controller", "get_nodes_online", params, listener);
+        return sendRequest("controller", "nodes_update", params, listener);
+    }
+
+    public boolean findNodeInfo(String nodeID, final CloudMedia.SimpleActionListener listener){
+        String params = "";
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", nodeID);
+        params = P2PMqtt.MyJsonString.addJsonBrace(params);
+        return findCMNodes(params, listener);
+    }
+
+    public boolean findRolesOnline(CMRole role, final CloudMedia.SimpleActionListener listener){
+        String params = "";
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", role.str());
+        params = P2PMqtt.MyJsonString.addJsonBrace(params);
+        return findCMNodes(params, listener);
+    }
+
+    private boolean findCMNodes(String params, final CloudMedia.SimpleActionListener listener) {
+        return sendRequest("controller", "nodes_find", params, listener);
+    }
+
+    public boolean sendText(String mWhoareyou, String text) {
+        String topic = mWhoareyou + "/" + mMyID + "/text";
+        mExtMqttClient.MqttPublish(topic, text, 1, false);
+        return true;
     }
 
     public CloudMedia(Context context) {
@@ -228,7 +280,7 @@ public class CloudMedia {
     }
 
     public RemoteMediaNode declareRemoteMediaNode(String whoareyou){
-        return RemoteMediaNode.create(mExtMqttClient, whoareyou);
+        return RemoteMediaNode.create(this, whoareyou);
     }
 
     public LocalMediaNode declareLocalMediaNode() {
@@ -261,6 +313,19 @@ public class CloudMedia {
             @Override
             public void onMqttMessage(String jstr) {
                 listener.OnNodesStatusChange(jstr);
+            }
+        });
+    }
+
+    public interface OnTextMessage{
+        boolean OnTextMessage(String text);
+    }
+
+    public void setTextMessageListener(final OnTextMessage listener) {
+        mExtMqttClient.installTopicHandler(mMyID + "/+/text", new MqttTopicHandler() {
+            @Override
+            public void onMqttMessage(String text) {
+                listener.OnTextMessage(text);
             }
         });
     }
