@@ -187,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
                 mButtonOnline.setEnabled(true);
 
                 mButtonGetOnlineNodes.setText("自动模式中，此按钮未启动");
-                mButtonGetOnlineNodes.setEnabled(true);
+                mButtonGetOnlineNodes.setEnabled(false);
                 return true;
             }
         });
