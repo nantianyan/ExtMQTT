@@ -34,6 +34,19 @@ public class P2PMqtt {
         ResultCode onResult(JSONObject jrpc);
     }
 
+    public interface IFullActionListener {
+        /**
+         * This method is invoked when an action has completed successfully.
+         * @param
+         */
+        public void onSuccess(String params);
+        /**
+         * This method is invoked when an action fails.
+         * @param
+         */
+        public void onFailure(String params);
+    }
+
     private static final String TAG = "P2PMqtt";
     private Context mContext;
     private MqttAndroidClient mClient;
@@ -90,7 +103,7 @@ public class P2PMqtt {
         return connect(host, null);
     }
 
-    public boolean connect(String host, final IMqttRpcActionListener onlineCallback) {
+    public boolean connect(String host, final IFullActionListener onlineCallback) {
         mHost = host;
         mClientId = MqttClient.generateClientId();
         mClient = new MqttAndroidClient(mContext, mHost, mClientId);
@@ -125,20 +138,13 @@ public class P2PMqtt {
                             MqttSubscribe(key, 2);
                         }
 
-                        // TODO: polish this
-                        try {
-                            String result = "{\"result\":\"OK\"}";
-                            JSONObject jrpcResult = new JSONObject(result);
-                            onlineCallback.onResult(jrpcResult);
-                        }catch (JSONException e){
-                            e.printStackTrace();
-                        }
+                        onlineCallback.onSuccess(null);
                     }
 
                     @Override
                     public void onFailure(IMqttToken arg0, Throwable arg1) {
                         Log.i(TAG, "connect fail ");
-                        arg1.printStackTrace();
+                        onlineCallback.onFailure(null);
                     }
                 });
             } catch (MqttException e) {
@@ -176,7 +182,7 @@ public class P2PMqtt {
         if (mClient.isConnected()) {
             String id = Long.toString(System.nanoTime());
             if(listener != null) {
-                Log.d(TAG, "add listener for id: " + id);
+                Log.d(TAG, "add listener for request id: " + id);
                 mActionListener.put(id, listener);
             }
 

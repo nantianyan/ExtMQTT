@@ -8,8 +8,10 @@ import com.example.p2pmqtt.P2PMqtt;
 import com.example.p2pmqtt.P2PMqttAsyncRequest;
 import com.example.p2pmqtt.P2PMqttRequest;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.w3c.dom.NodeList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,7 +21,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -36,6 +40,9 @@ public class CloudMedia {
     private P2PMqtt mExtMqttClient;
     private String mBrokerUrl;
     private  String mMyID;
+
+    private FullActionListener mConnectLisenser;
+    private OnNodesStatusChange mNodeStatusLisener;
 
     public enum CMStatus{
         PUSHING,
@@ -248,35 +255,35 @@ public class CloudMedia {
 
     public CloudMedia(Context context) {
         mContext = context;
-
-        mBrokerUrl = getBrokerUrlFromServer();
-        mMyID = getIDFromServer();
-
-        mExtMqttClient = new P2PMqtt(mContext, mMyID, "12345");
     }
 
-    public boolean connect(final SimpleActionListener listener) {
-        assert(listener != null);
+    public boolean connect(final String nick, final CMRole role, final FullActionListener listener) {
+        mBrokerUrl = getBrokerUrlFromServer();
+        mMyID = getIDFromServer();
+        mExtMqttClient = new P2PMqtt(mContext, mMyID, "12345");
 
-        return mExtMqttClient.connect(mBrokerUrl,
-                new P2PMqtt.IMqttRpcActionListener() {
+        setNodesStatusChangeListener(mNodeStatusLisener);
+
+        mExtMqttClient.connect(mBrokerUrl, new P2PMqtt.IFullActionListener() {
             @Override
-            public P2PMqtt.ResultCode onResult(JSONObject jrpc) {
-                String result = null;
-                try {
-                    result = jrpc.getString("result");
-                    Log.d(TAG, "jrpc's result is: " + result);
-                } catch (JSONException e) {
-                    Log.d(TAG, "illeagle JSON!");
-                    e.printStackTrace();
-                }
-                if (listener.onResult(result)) {
-                    return P2PMqtt.ResultCode.ERROR_None;
-                } else {
-                    return P2PMqtt.ResultCode.ERROR_Unknown;
-                }
+            public void onSuccess(String params) {
+
+                putOnline(nick, role, new SimpleActionListener() {
+                    @Override
+                    public boolean onResult(String result) {
+                        listener.onSuccess("OK");
+                        return true;
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(String params) {
+                listener.onFailure("ERROR");
             }
         });
+
+        return true;
     }
 
     public RemoteMediaNode declareRemoteMediaNode(String whoareyou){
@@ -299,22 +306,100 @@ public class CloudMedia {
         boolean onResult(String result);
     }
 
+    public interface FullActionListener {
+        public void onSuccess(String params);
+        public void onFailure(String params);
+    }
+
     /**
      * Interface definition for listener of nodes status changes
      * such as online/offline
      */
     public interface OnNodesStatusChange{
-        boolean OnNodesStatusChange(String jstr);
+        boolean OnNodesStatusChange(NodesList nodesList);
     }
 
+    public final class NodesList{
+        public final class Node{
+            private String mWhoami;
+            private String mNick;
+            private String mLocation;
+            private String mLastUpdateTime;
+
+            Node(JSONObject jnode){
+                try {
+                    mWhoami = jnode.getString("whoami");
+                    mNick = jnode.getString("nick");
+                    mLocation = jnode.getString("location");
+                    mLastUpdateTime = jnode.getString("time");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            void log(){
+                Log.d(TAG, "whoami: " + mWhoami);
+                Log.d(TAG, "nick: " + mNick);
+                Log.d(TAG, "location: " + mLocation);
+                Log.d(TAG, "time: " + mLastUpdateTime);
+            }
+        }
+
+        private List<Node> mNodesList = new ArrayList<Node>();
+        public List<String> mNodesID = new ArrayList<String>();
+        public List<String> mNodesNick = new ArrayList<String>();
+
+        public NodesList(String jsonStr) {
+            try {
+                JSONArray jsonNodes = new JSONArray(jsonStr);
+                for (int i = 0; i < jsonNodes.length(); i++) {
+                    JSONObject jnode = jsonNodes.getJSONObject(i);
+                    Node node = new Node(jnode);
+                    node.log();
+                    mNodesList.add(node);
+                    mNodesID.add(node.mWhoami);
+                    mNodesNick.add(node.mNick);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public int size() {
+            return mNodesList.size();
+        }
+
+        public void clear(){
+            mNodesID.clear();
+            mNodesNick.clear();
+            mNodesList.clear();
+        }
+
+        public List<Node> get(){
+            return mNodesList;
+        }
+        public void log(){
+            for (Node e:mNodesList) {
+                e.log();
+            }
+        }
+    }
 
     public void setNodesStatusChangeListener(final OnNodesStatusChange listener) {
-        mExtMqttClient.installTopicHandler(TOPIC_PUSHER_ONLINE, new MqttTopicHandler() {
-            @Override
-            public void onMqttMessage(String jstr) {
-                listener.OnNodesStatusChange(jstr);
-            }
-        });
+        if(listener == null){
+            return;
+        }
+
+        if(mExtMqttClient == null) {
+            mNodeStatusLisener = listener;
+        } else {
+            mExtMqttClient.installTopicHandler(TOPIC_PUSHER_ONLINE, new MqttTopicHandler() {
+                @Override
+                public void onMqttMessage(String jstr) {
+                    mNodeStatusLisener.OnNodesStatusChange(new NodesList(jstr));
+                }
+            });
+        }
     }
 
     public interface OnTextMessage{
