@@ -39,16 +39,16 @@ public class RemoteMediaNode{
     }
 
     public String getRtmpPlayUrl() {
-        return "rtmp://www.yangxudong.com/cloudmedia/" + mWhoareyou;
+        return "rtmp://push.yangxudong.com/cloudmedia/" + mWhoareyou;
         //return "rtmp://192.168.199.56:1935/live/livestream";
     }
 
     public String getFlvPlayUrl() {
-        return "http://www.yangxudong.com/cloudmedia/" + mWhoareyou + ".flv";
+        return "http://push.yangxudong.com/cloudmedia/" + mWhoareyou + ".flv";
     }
 
     public String getHlsPlayUrl() {
-        return "http://www.yangxudong.com/cloudmedia/" + mWhoareyou + ".m3u8";
+        return "http://push.yangxudong.com/cloudmedia/" + mWhoareyou + ".m3u8";
     }
 
     public boolean startPushMedia(final CloudMedia.SimpleActionListener listener){
