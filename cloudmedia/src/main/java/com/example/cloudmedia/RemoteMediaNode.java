@@ -18,6 +18,7 @@ public class RemoteMediaNode{
     private String mWhoareyou;
     private CloudMedia mCloudMedia;
     private String mRtmpPublishUrl;
+    private int mTestServer = 1;
 
     public static final String REQUEST_START_PUSH_MEDIA = "startPushMedia";
     public static final String REQUEST_STOP_PUSH_MEDIA = "stopPushMedia";
@@ -34,21 +35,47 @@ public class RemoteMediaNode{
 
     private String generateRtmpPublishUrl(){
         // { mWhoareyou + System.nanoTime() }
-        return "rtmp://video-center.alivecdn.com/cloudmedia/" + mWhoareyou + "?vhost=push.yangxudong.com";
-        //return "rtmp://192.168.199.56:1935/live/livestream";
+        switch (mTestServer){
+            case 0:
+                return "rtmp://video-center.alivecdn.com/cloudmedia/" + mWhoareyou + "?vhost=push.yangxudong.com";
+            case 1:
+                return "rtmp://192.168.199.56:1935/live/livestream";
+            default:
+                return "rtmp://video-center.alivecdn.com/cloudmedia/" + mWhoareyou + "?vhost=push.yangxudong.com";
+        }
     }
 
     public String getRtmpPlayUrl() {
-        return "rtmp://push.yangxudong.com/cloudmedia/" + mWhoareyou;
-        //return "rtmp://192.168.199.56:1935/live/livestream";
+        switch (mTestServer){
+            case 0:
+                return "rtmp://push.yangxudong.com/cloudmedia/" + mWhoareyou;
+            case 1:
+                return "rtmp://192.168.199.56:1935/live/livestream";
+            default:
+                return "rtmp://push.yangxudong.com/cloudmedia/" + mWhoareyou;
+        }
     }
 
     public String getFlvPlayUrl() {
-        return "http://push.yangxudong.com/cloudmedia/" + mWhoareyou + ".flv";
+        switch (mTestServer){
+            case 0:
+                return "http://push.yangxudong.com/cloudmedia/" + mWhoareyou + ".flv";
+            case 1:
+                return "http://192.168.199.56:1935/live/livestream.flv";
+            default:
+                return "http://push.yangxudong.com/cloudmedia/" + mWhoareyou + ".flv";
+        }
     }
 
     public String getHlsPlayUrl() {
-        return "http://push.yangxudong.com/cloudmedia/" + mWhoareyou + ".m3u8";
+        switch (mTestServer){
+            case 0:
+                return "http://push.yangxudong.com/cloudmedia/" + mWhoareyou + ".m3u8";
+            case 1:
+                return "http://192.168.199.56:1935/live/livestream.m3u8";
+            default:
+                return "http://push.yangxudong.com/cloudmedia/" + mWhoareyou + ".m3u8";
+        }
     }
 
     public boolean startPushMedia(final CloudMedia.SimpleActionListener listener){
