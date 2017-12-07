@@ -41,11 +41,11 @@ public abstract class P2PMqttRequestHandler {
 
         String replyTopic = mMqttTopic.split("/")[1] + "/" + mMqttTopic.split("/")[0] + "/reply";
 
-        String payload = "{";
-        payload = payload + "\"jsonrpc\":\"2.0\",";
-        payload = payload + "\"result\":" + result + ",";
-        payload = payload + "\"id\":" + id;
-        payload = payload + "}";
+        String payload = "";
+        payload = P2PMqtt.MyJsonString.makeKeyValueString(payload,"jsonrpc", "2.0");
+        payload = P2PMqtt.MyJsonString.makeKeyValueString(payload,"result", result);
+        payload = P2PMqtt.MyJsonString.makeKeyValueString(payload,"id", "" + id);
+        payload = P2PMqtt.MyJsonString.addJsonBrace(payload);
 
         mP2PMqtt.MqttPublish(replyTopic, payload, 2, false);
     }

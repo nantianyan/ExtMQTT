@@ -119,7 +119,7 @@ public class P2PMqtt {
                 //TODO: connect host with whoami and whami's password or in putOnline function?
                 //mConnectOptions.setUserName(userName);
                 //mConnectOptions.setPassword(passWord.toCharArray());
-                //mConnectOptions.setAutomaticReconnect(true);
+                mConnectOptions.setAutomaticReconnect(true);
                 mConnectOptions.setWill("cm/nodes_will", mWhoami.getBytes(), 2, false);
 
                 mClient.connect(mConnectOptions, this, new IMqttActionListener() {

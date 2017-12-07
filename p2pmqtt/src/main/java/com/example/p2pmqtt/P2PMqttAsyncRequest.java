@@ -18,7 +18,7 @@ public class P2PMqttAsyncRequest extends P2PMqttRequest {
     }
 
     @Override
-    public P2PMqtt.ResultCode onResult(JSONObject jrpc){
+    synchronized public P2PMqtt.ResultCode onResult(JSONObject jrpc){
         return mListener.onResult(jrpc);
     }
 }
