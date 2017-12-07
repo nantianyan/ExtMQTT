@@ -10,9 +10,9 @@ import org.json.JSONObject;
 
 public abstract class P2PMqttRequestHandler {
     private P2PMqtt mP2PMqtt;
-    private String mMqttTopic;
-    private MqttMessage mMqttMessage;
-    private JSONObject mJrpc;
+    private volatile String mMqttTopic;
+    private volatile MqttMessage mMqttMessage;
+    private volatile JSONObject mJrpc;
 
     public abstract String HandleJrpc(JSONObject jrpc);
 

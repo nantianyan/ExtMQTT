@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
@@ -16,6 +17,15 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.alivc.live.pusher.AlivcFpsEnum;
+import com.alivc.live.pusher.AlivcLivePushConfig;
+import com.alivc.live.pusher.AlivcLivePushError;
+import com.alivc.live.pusher.AlivcLivePushErrorListener;
+import com.alivc.live.pusher.AlivcLivePushInfoListener;
+import com.alivc.live.pusher.AlivcLivePushNetworkListener;
+import com.alivc.live.pusher.AlivcLivePusher;
+import com.alivc.live.pusher.AlivcPreviewOrientationEnum;
+import com.alivc.live.pusher.AlivcResolutionEnum;
 import com.example.cloudmedia.CloudMedia;
 import com.example.cloudmedia.LocalMediaNode;
 import com.example.cloudmedia.RemoteMediaNode;
@@ -72,6 +82,9 @@ public class MainActivity extends AppCompatActivity {
          */
         installLocalMediaNodeHandler();
 
+        //testPlayer("rtmp://push.yangxudong.com/cloudmedia/CloudMedia_79128575502638");
+
+        //testPusher();
     }
 
     @Override
@@ -108,73 +121,6 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void showOnlineNodes(final CloudMedia.NodesList nodesList){
-        Log.i(TAG, "call showOnlineNodes");
-
-        mListViewNodesOnline.setAdapter(new ArrayAdapter<String>(mContext,
-                android.R.layout.simple_list_item_1,
-                (String[])nodesList.mNodesNick.toArray(new  String[nodesList.size()])));
-
-        mListViewNodesOnline.setOnItemClickListener(
-                new AdapterView.OnItemClickListener() {
-                    @Override
-                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                        Log.d(TAG, "Clicke item: "+position);
-                        view.setBackgroundColor(Color.RED);
-
-                        Log.d(TAG, "the item's ID is:" + nodesList.mNodesID.get(position));
-                        String targetID = nodesList.mNodesID.get(position);
-
-                        if(mCurrentPusher == null) {
-                            mCurrentPusher = new PusherController(mCloudMedia, targetID);
-                            mCurrentPusher.initPlayer(mContext, mSurfaceView);
-                        }
-
-                        if(mCurrentPusher.getWhoareyou() != targetID) {
-                            // TODO: stop the original pusher
-                            mCurrentPusher = new PusherController(mCloudMedia,targetID);
-                            mCurrentPusher.initPlayer(mContext, mSurfaceView);
-                        }
-
-                        if(mCurrentPusher.getStatus() == PusherController.PlayerStatus.STOPED){
-                            mCurrentPusher.startPushMedia(new CloudMedia.SimpleActionListener() {
-                                @Override
-                                public boolean onResult(String result) {
-                                    return true;
-                                }
-                            });
-                        }
-                        if (mCurrentPusher.getStatus() == PusherController.PlayerStatus.PLAYING) {
-                            mCurrentPusher.stopPushMedia(new CloudMedia.SimpleActionListener() {
-                                @Override
-                                public boolean onResult(String result) {
-                                    return true;
-                                }
-                            });
-                        }
-                    }
-                }
-        );
-    }
-
-    private void installLocalMediaNodeHandler(){
-        mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
-        mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
-            @Override
-            public boolean onStartPushMedia(String params) {
-                Toast.makeText(mContext, "start push", Toast.LENGTH_LONG).show();
-                return true;
-            }
-        });
-        mLocalMediaNode.setOnStopPushMediaActor(new LocalMediaNode.OnStopPushMedia() {
-            @Override
-            public boolean onStopPushMedia(String params) {
-                Toast.makeText(mContext, "stop push", Toast.LENGTH_LONG).show();
-                return true;
-            }
-        });
-    }
-
     private void installNodesStatusListener(){
         mCloudMedia.setNodesStatusChangeListener(new CloudMedia.OnNodesStatusChange() {
             @Override
@@ -203,6 +149,64 @@ public class MainActivity extends AppCompatActivity {
                         Log.e(TAG, "connect onFailure");
                     }
                 });
+    }
+
+    private void showOnlineNodes(final CloudMedia.NodesList nodesList){
+        Log.i(TAG, "call showOnlineNodes");
+
+        mListViewNodesOnline.setAdapter(new ArrayAdapter<String>(mContext,
+                android.R.layout.simple_list_item_1,
+                (String[])nodesList.mNodesNick.toArray(new  String[nodesList.size()])));
+
+        mListViewNodesOnline.setOnItemClickListener(
+                new AdapterView.OnItemClickListener() {
+                    @Override
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                        Log.d(TAG, "Clicke item: "+position);
+                        view.setBackgroundColor(Color.RED);
+
+                        Log.d(TAG, "the item's ID is:" + nodesList.mNodesID.get(position));
+                        String targetID = nodesList.mNodesID.get(position);
+
+                        /*
+                        if(mCurrentPusher == null) {
+                            mCurrentPusher = new PusherController(mCloudMedia, targetID);
+                            mCurrentPusher.initPlayer(mContext, mSurfaceView);
+                        }
+
+                        if(mCurrentPusher.getWhoareyou() != targetID) {
+                            // TODO: stop the original pusher
+                            mCurrentPusher = new PusherController(mCloudMedia,targetID);
+                            mCurrentPusher.initPlayer(mContext, mSurfaceView);
+                        }
+                        */
+
+                        if(mCurrentPusher != null) {
+                            mCurrentPusher.onDestroy();
+                            mCurrentPusher = null;
+                        }
+                        mCurrentPusher = new PusherController(mCloudMedia, targetID);
+                        mCurrentPusher.initPlayer(mContext, mSurfaceView);
+
+                        if(mCurrentPusher.getStatus() == PusherController.PlayerStatus.STOPED){
+                            mCurrentPusher.startPushMedia(new CloudMedia.SimpleActionListener() {
+                                @Override
+                                public boolean onResult(String result) {
+                                    return true;
+                                }
+                            });
+                        }
+                        if (mCurrentPusher.getStatus() == PusherController.PlayerStatus.PLAYING) {
+                            mCurrentPusher.stopPushMedia(new CloudMedia.SimpleActionListener() {
+                                @Override
+                                public boolean onResult(String result) {
+                                    return true;
+                                }
+                            });
+                        }
+                    }
+                }
+        );
     }
 
     private void handleButtonOnOffLine(){
@@ -241,4 +245,34 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void installLocalMediaNodeHandler(){
+        mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
+        mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
+            @Override
+            public boolean onStartPushMedia(String params) {
+                Toast.makeText(mContext, "start push", Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
+        mLocalMediaNode.setOnStopPushMediaActor(new LocalMediaNode.OnStopPushMedia() {
+            @Override
+            public boolean onStopPushMedia(String params) {
+                Toast.makeText(mContext, "stop push", Toast.LENGTH_LONG).show();
+                return true;
+            }
+        });
+    }
+
+    private void testPlayer(String url){
+        if(mCurrentPusher == null) {
+            mCurrentPusher = new PusherController(mCloudMedia, "123");
+            mCurrentPusher.initPlayer(mContext, mSurfaceView);
+            mCurrentPusher.testPlayer(url);
+        }
+    }
+
+    private void testPusher(){
+        Pusher mPusher = new Pusher(mContext, mSurfaceView);
+        mPusher.initPusher();
+    }
 }

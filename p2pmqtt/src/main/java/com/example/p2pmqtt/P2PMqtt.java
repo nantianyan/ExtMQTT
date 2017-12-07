@@ -258,7 +258,7 @@ public class P2PMqtt {
                 String strID = id; // we force id to use String rather int. id.toString();
                 if(mActionListener.containsKey(strID)){
                     mActionListener.get(strID).onResult(jrpc);
-                    mActionListener.remove("strID");
+                    mActionListener.remove(strID);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

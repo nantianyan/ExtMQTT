@@ -47,6 +47,8 @@ public class PusherController {
     }
 
     void initPlayer(Context context, SurfaceView surface) {
+        Log.d(TAG, "initPlayer");
+
         mContext = context;
         mSurfaceView = surface;
         initSurface();
@@ -156,13 +158,14 @@ public class PusherController {
         mPlayer.enableNativeLog();
     }
 
-    private void testPlayer(String url){
+    public void testPlayer(String url){
         if(mPlayer != null)
             mPlayer.prepareAndPlay(url);
     }
 
     private void play(){
         if(mPlayer != null){
+            Log.d(TAG, "prepareToPlay");
             mPlayer.prepareToPlay(mUrl);
             mStatus = PlayerStatus.PLAYING;
         }
@@ -170,6 +173,8 @@ public class PusherController {
 
     private void stop(){
         if(mPlayer != null){
+            Log.d(TAG, "stop");
+
             mPlayer.stop();
             mStatus = PlayerStatus.STOPED;
         }
@@ -181,6 +186,7 @@ public class PusherController {
             public boolean onResult(String result) {
                 listener.onResult(result);
 
+                Log.i(TAG, "1111111111111111");
                 play();
                 return true;
             }
