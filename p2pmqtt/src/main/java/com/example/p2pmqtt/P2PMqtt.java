@@ -156,6 +156,16 @@ public class P2PMqtt {
         return  true;
     }
 
+    public boolean disconnect(){
+        try {
+            mClient.disconnect();
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+
+        return true;
+    }
+
     public boolean sendRequest(P2PMqttRequest request) {
         Log.d(TAG, "sendRequest 1");
         sendRequest(request.getWhoareyou(), request.getMethodName(), request.getMethodParams(), request);

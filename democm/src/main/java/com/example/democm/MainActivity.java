@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -34,50 +35,56 @@ public class MainActivity extends AppCompatActivity {
     private Button mButtonGetOnlineNodes;
     private ListView mListViewNodesOnline;
 
+    private SurfaceView mSurfaceView;
+    private PusherController mCurrentPusher;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mEtMyNick = (EditText)findViewById(R.id.etMyNick);
         mListViewNodesOnline = (ListView) findViewById(R.id.listViewNodesOnline);
+        mSurfaceView = (SurfaceView) findViewById(R.id.surfaceView);
 
         mCloudMedia = new CloudMedia(mContext);
 
         /**
          * install nodes status listener.
-         * when nodes on/off or other field update, the listener will be triggered
+         * when nodes on/off or other field update, the listener will be triggered.
+         * further more:
+         *  the lisener will deal with player
          */
-        testNodesStatusListener();
+        installNodesStatusListener();
 
-        mMyNick = mEtMyNick.getText().toString();
-        mCloudMedia.connect(mMyNick, CloudMedia.CMRole.ROLE_PUSHER,
-                new CloudMedia.FullActionListener() {
-                    @Override
-                    public void onSuccess(String params) {
-                        Log.i(TAG, "connect onSuccess");
-                        mIsOnline = true;
-
-                        mButtonOnline.setText("下线");
-                        mButtonOnline.setEnabled(true);
-                    }
-
-                    @Override
-                    public void onFailure(String params) {
-                        Log.e(TAG, "connect onFailure");
-                    }
-                });
+        /**
+         * connect to mqtt broker, and change the UI
+         */
+        connectToBroker();
 
 
         /**
          * button to trigger the test about on off line media node
          */
-        testCloudMedia_OnOffLine();
+        handleButtonOnOffLine();
 
         /**
          * test install handler for local media node
          */
-        testLocalMediaNode();
+        installLocalMediaNodeHandler();
+
     }
+
+    @Override
+    protected void onDestroy() {
+        mCurrentPusher.onDestroy();
+
+        if(mCloudMedia != null) {
+            mCloudMedia.disconnect();
+        }
+
+        super.onDestroy();
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -117,33 +124,40 @@ public class MainActivity extends AppCompatActivity {
 
                         Log.d(TAG, "the item's ID is:" + nodesList.mNodesID.get(position));
                         String targetID = nodesList.mNodesID.get(position);
-                        testRemoteMediaNode(targetID);
+
+                        if(mCurrentPusher == null) {
+                            mCurrentPusher = new PusherController(mCloudMedia, targetID);
+                            mCurrentPusher.initPlayer(mContext, mSurfaceView);
+                        }
+
+                        if(mCurrentPusher.getWhoareyou() != targetID) {
+                            // TODO: stop the original pusher
+                            mCurrentPusher = new PusherController(mCloudMedia,targetID);
+                            mCurrentPusher.initPlayer(mContext, mSurfaceView);
+                        }
+
+                        if(mCurrentPusher.getStatus() == PusherController.PlayerStatus.STOPED){
+                            mCurrentPusher.startPushMedia(new CloudMedia.SimpleActionListener() {
+                                @Override
+                                public boolean onResult(String result) {
+                                    return true;
+                                }
+                            });
+                        }
+                        if (mCurrentPusher.getStatus() == PusherController.PlayerStatus.PLAYING) {
+                            mCurrentPusher.stopPushMedia(new CloudMedia.SimpleActionListener() {
+                                @Override
+                                public boolean onResult(String result) {
+                                    return true;
+                                }
+                            });
+                        }
                     }
                 }
         );
     }
 
-    private void testRemoteMediaNode(String targetNodeID){
-        // to use singleton ?
-        mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(targetNodeID);
-
-        mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
-            @Override
-            public boolean onResult(String result) {
-                //if(result.equalsIgnoreCase("OK")){
-                Log.i(TAG, "start push media is OK");
-                /*
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                intent.setDataAndType(Uri.parse(mRemoteMediaNode.getFlvPlayUrl()), "video/flv");
-                startActivity(intent);
-                */
-                //}
-                return true;
-            }
-        });
-    }
-
-    private void testLocalMediaNode(){
+    private void installLocalMediaNodeHandler(){
         mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
         mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
             @Override
@@ -161,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void testNodesStatusListener(){
+    private void installNodesStatusListener(){
         mCloudMedia.setNodesStatusChangeListener(new CloudMedia.OnNodesStatusChange() {
             @Override
             public boolean OnNodesStatusChange(CloudMedia.NodesList nodesList) {
@@ -171,7 +185,27 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void testCloudMedia_OnOffLine(){
+    private void connectToBroker(){
+        mMyNick = mEtMyNick.getText().toString();
+        mCloudMedia.connect(mMyNick, CloudMedia.CMRole.ROLE_PUSHER,
+                new CloudMedia.FullActionListener() {
+                    @Override
+                    public void onSuccess(String params) {
+                        Log.i(TAG, "connect onSuccess");
+                        mIsOnline = true;
+
+                        mButtonOnline.setText("下线");
+                        mButtonOnline.setEnabled(true);
+                    }
+
+                    @Override
+                    public void onFailure(String params) {
+                        Log.e(TAG, "connect onFailure");
+                    }
+                });
+    }
+
+    private void handleButtonOnOffLine(){
         mButtonOnline = (Button) findViewById(R.id.buttonConnect);
         mButtonOnline.setOnClickListener(new View.OnClickListener() {
             @Override

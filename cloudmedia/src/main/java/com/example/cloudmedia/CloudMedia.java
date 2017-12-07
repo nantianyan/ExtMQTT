@@ -285,6 +285,13 @@ public class CloudMedia {
         return true;
     }
 
+    public boolean disconnect() {
+        // to close all local media nodes ?
+
+        mExtMqttClient.disconnect();
+        return  true;
+    }
+
     public RemoteMediaNode declareRemoteMediaNode(String whoareyou){
         return RemoteMediaNode.create(this, whoareyou);
     }

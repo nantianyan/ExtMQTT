@@ -6,47 +6,49 @@
     android:layout_height="match_parent"
     tools:context="com.example.democm.MainActivity">
 
-    <LinearLayout
-        android:layout_width="368dp"
-        android:layout_height="551dp"
-        android:orientation="vertical"
-        tools:layout_editor_absoluteY="8dp"
-        tools:layout_editor_absoluteX="8dp">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/fab_margin"
-            android:layout_marginLeft="@dimen/fab_margin"
-            android:text="My Nick: "/>
-        <EditText
-            android:id="@+id/etMyNick"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="GOOD_NAME"
-            android:layout_marginLeft="@dimen/fab_margin"
-            android:layout_marginRight="@dimen/fab_margin"/>
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-        <Button
-            android:id="@+id/buttonConnect"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/fab_margin"
-            android:text="连接中..."
-            android:enabled="false"/>
+                <SurfaceView
+                    android:id="@+id/surfaceView"
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp" />
 
-        <Button
-            android:id="@+id/buttonGetOnlineNodes"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="查看在线节点"
-            android:enabled="false"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/fab_margin"
+                    android:layout_marginLeft="@dimen/fab_margin"
+                    android:text="My Nick: "/>
+                <EditText
+                    android:id="@+id/etMyNick"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="GOOD_NAME"
+                    android:layout_marginLeft="@dimen/fab_margin"
+                    android:layout_marginRight="@dimen/fab_margin"/>
 
-        <ListView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/listViewNodesOnline"/>
+                <Button
+                    android:id="@+id/buttonConnect"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/fab_margin"
+                    android:text="连接中..."
+                    android:enabled="false"/>
 
-    </LinearLayout>
+                <Button
+                    android:id="@+id/buttonGetOnlineNodes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="查看在线节点"
+                    android:enabled="false"/>
+
+                <ListView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/listViewNodesOnline"/>
+        </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

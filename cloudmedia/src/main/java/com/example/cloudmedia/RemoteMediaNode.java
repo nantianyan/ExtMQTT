@@ -18,7 +18,7 @@ public class RemoteMediaNode{
     private String mWhoareyou;
     private CloudMedia mCloudMedia;
     private String mRtmpPublishUrl;
-    private int mTestServer = 1;
+    private int mTestServer = 0;
 
     public static final String REQUEST_START_PUSH_MEDIA = "startPushMedia";
     public static final String REQUEST_STOP_PUSH_MEDIA = "stopPushMedia";
@@ -33,6 +33,7 @@ public class RemoteMediaNode{
         return new RemoteMediaNode(cm, whoareyou);
     }
 
+
     private String generateRtmpPublishUrl(){
         // { mWhoareyou + System.nanoTime() }
         switch (mTestServer){
@@ -43,6 +44,10 @@ public class RemoteMediaNode{
             default:
                 return "rtmp://video-center.alivecdn.com/cloudmedia/" + mWhoareyou + "?vhost=push.yangxudong.com";
         }
+    }
+
+    public void setTestTestServer(int type){
+        mTestServer = type;
     }
 
     public String getRtmpPlayUrl() {

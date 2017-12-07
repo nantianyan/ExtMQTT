@@ -20,6 +20,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    // for ali player
+    repositories {
+        flatDir { dirs 'libs' }
+    }
 }
 
 dependencies {
@@ -32,4 +37,9 @@ dependencies {
     compile 'com.android.support:design:26.+'
     testCompile 'junit:junit:4.12'
     compile project(':cloudmedia')
+
+    // for ali player
+    compile(name: 'AlivcPlayer', ext: 'aar')
+    //compile(name: 'AliyunVodPlayer', ext: 'aar')
+    //compile(name: 'AliyunVodPlayerView', ext: 'aar')
 }
