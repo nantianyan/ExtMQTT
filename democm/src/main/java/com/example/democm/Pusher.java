@@ -22,7 +22,7 @@ import com.alivc.live.pusher.AlivcResolutionEnum;
 public class Pusher {
     private static final String TAG = "Pusher";
     private Context mContext;
-    final AlivcLivePusher mAlivcLivePusher = new AlivcLivePusher();
+    AlivcLivePusher mAlivcLivePusher;
     private SurfaceView mSurfaceView;
     private String mUrl;
 
@@ -31,17 +31,29 @@ public class Pusher {
         mSurfaceView = surfaceView;
     }
 
+    public void prepareAndPush(String url){
+        Log.d(TAG, "prepareAndPush:" + url);
+        mUrl = url;
+        initPusher();
+        initSurface();
+    }
+
     private void initSurface(){
+        Log.d(TAG, "initSurface");
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             public void surfaceCreated(SurfaceHolder holder) {
                 holder.setKeepScreenOn(true);
-                try {
-                    mAlivcLivePusher.startPreview(mSurfaceView);
-                    mAlivcLivePusher.startPush(mUrl);
-                } catch (IllegalArgumentException e) {
-                    e.toString();
-                } catch (IllegalStateException e) {
-                    e.toString();
+                if(mAlivcLivePusher != null) {
+                    try {
+                        Log.d(TAG, "....startpreview");
+                        mAlivcLivePusher.startPreview(mSurfaceView);
+                        Log.d(TAG, "....startPush:" + mUrl);
+                        mAlivcLivePusher.startPush(mUrl);
+                    } catch (IllegalArgumentException e) {
+                        e.toString();
+                    } catch (IllegalStateException e) {
+                        e.toString();
+                    }
                 }
             }
             @Override
@@ -55,11 +67,9 @@ public class Pusher {
             }
         });
     }
-    public void initPusher(String url){
-        mUrl = url;
-
-        initSurface();
-
+    private void initPusher(){
+        Log.d(TAG, "initPusher");
+        mAlivcLivePusher = new AlivcLivePusher();
         AlivcLivePushConfig mAlivcLivePushConfig = new AlivcLivePushConfig();
         mAlivcLivePushConfig.setResolution(AlivcResolutionEnum.RESOLUTION_480P);//分辨率540P
         mAlivcLivePushConfig.setInitialVideoBitrate(800); //初始码率800Kbps
@@ -213,6 +223,7 @@ public class Pusher {
 
     public void startPush(String url){
         //"rtmp://video-center.alivecdn.com/AppName/StreamName?vhost=push.yangxudong.com"
+        mAlivcLivePusher.startPreview(mSurfaceView);;
         mAlivcLivePusher.startPush(url);
     }
 
@@ -220,6 +231,7 @@ public class Pusher {
         mAlivcLivePusher.stopPreview();
         mAlivcLivePusher.stopPush();
     }
+
     public void destroy(){
         stopPush();
         mAlivcLivePusher.destroy();

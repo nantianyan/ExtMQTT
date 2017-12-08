@@ -2,33 +2,24 @@ package com.example.democm;
 
 import android.content.Context;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.widget.Toast;
 
 import com.alivc.player.AliVcMediaPlayer;
 import com.alivc.player.MediaPlayer;
-import com.example.cloudmedia.CloudMedia;
-import com.example.cloudmedia.RemoteMediaNode;
 
 import java.util.Map;
 
 /**
- * Created by 阳旭东 on 2017/12/6.
+ * Created by 阳旭东 on 2017/12/8.
  */
 
-public class PusherController {
-    private static final String TAG = "PusherController";
-    private String mUrl;
-    private PlayerStatus mStatus;
-    private String mWhoareyou;
-    private RemoteMediaNode mRemotePusher;
-    private CloudMedia mCloudMedia;
-    private AliVcMediaPlayer mPlayer;
-    private SurfaceView mSurfaceView;
+public class Player {
+    private final static String TAG = "Player";
     private Context mContext;
+    private SurfaceView mSurfaceView;
+    private AliVcMediaPlayer mPlayer;
 
     enum PlayerStatus{
         PLAYING,
@@ -36,29 +27,48 @@ public class PusherController {
         STOPED,
         SEEKING
     }
+    private PlayerStatus mStatus = PlayerStatus.STOPED;
 
-    public String getRtmpPlayUrl(){
-        return mRemotePusher.getRtmpPlayUrl();
-    }
-
-    PusherController(CloudMedia cloudMedia, String whoareyou) {
-        Log.d(TAG, "new PusherController");
-        mCloudMedia = cloudMedia;
-        mWhoareyou = whoareyou;
-        mRemotePusher = mCloudMedia.declareRemoteMediaNode(whoareyou);
-        mUrl = mRemotePusher.getRtmpPlayUrl();
-        mStatus = PlayerStatus.STOPED;
-    }
-
-    void initPlayer(Context context, SurfaceView surface) {
-        Log.d(TAG, "initPlayer");
-
+    Player(Context context, SurfaceView surface){
         mContext = context;
         mSurfaceView = surface;
-        initSurface();
+    }
+
+    void init() {
+        Log.d(TAG, "init");
         final String businessId = "";
         AliVcMediaPlayer.init(mContext, businessId);
+        initSurface();
         initVodPlayer();
+    }
+
+
+    public void play(String url){
+        if(mPlayer != null){
+            Log.d(TAG, "prepareToPlay");
+            mPlayer.prepareToPlay(url);
+            mStatus = PlayerStatus.PLAYING;
+        }
+    }
+
+    public void stop(){
+        if(mPlayer != null){
+            Log.d(TAG, "stop");
+
+            mPlayer.stop();
+            mStatus = PlayerStatus.STOPED;
+        }
+    }
+
+    public PlayerStatus getStatus() {
+        return mStatus;
+    }
+
+    public void onDestroy(){
+        if (mPlayer != null) {
+            mPlayer.stop();
+            mPlayer.destroy();
+        }
     }
 
     private void initSurface(){
@@ -66,7 +76,7 @@ public class PusherController {
             public void surfaceCreated(SurfaceHolder holder) {
                 holder.setType(SurfaceHolder.SURFACE_TYPE_GPU);
                 holder.setKeepScreenOn(true);
-                Log.d(TAG, "AlivcPlayer onSurfaceCreated." + mPlayer);
+                Log.d(TAG, "AlivcPlayer onSurfaceCreated.");
 
                 // Important: surfaceView changed from background to front, we need reset surface to mediaplayer.
                 // 对于从后台切换到前台,需要重设surface;部分手机锁屏也会做前后台切换的处理
@@ -91,6 +101,7 @@ public class PusherController {
 
     private void initVodPlayer() {
         mPlayer = new AliVcMediaPlayer(mContext, mSurfaceView);
+        mPlayer.setVideoSurface(mSurfaceView.getHolder().getSurface());
 
         mPlayer.setPreparedListener(new MediaPlayer.MediaPlayerPreparedListener() {
             @Override
@@ -160,59 +171,5 @@ public class PusherController {
             }
         });
         mPlayer.enableNativeLog();
-    }
-
-    public void testPlayer(String url){
-        if(mPlayer != null)
-            mPlayer.prepareAndPlay(url);
-    }
-
-    public void play(){
-        if(mPlayer != null){
-            Log.d(TAG, "prepareToPlay:" + mRemotePusher.getRtmpPlayUrl());
-            mPlayer.prepareToPlay(mRemotePusher.getRtmpPlayUrl());
-            mStatus = PlayerStatus.PLAYING;
-        }
-    }
-
-    public void stop(){
-        if(mPlayer != null){
-            Log.d(TAG, "stop");
-
-            mPlayer.stop();
-            mStatus = PlayerStatus.STOPED;
-        }
-    }
-    void startPushMedia(final CloudMedia.SimpleActionListener listener){
-        Log.d(TAG, "startPushMedia");
-        mRemotePusher.startPushMedia(listener);
-    }
-
-    void stopPushMedia(final CloudMedia.SimpleActionListener listener){
-        Log.d(TAG, "stopPushMedia");
-
-        mRemotePusher.stopPushMedia(new CloudMedia.SimpleActionListener() {
-            @Override
-            public boolean onResult(String result) {
-                listener.onResult(result);
-
-                stop();
-                return true;
-            }
-        });
-    }
-
-    PlayerStatus getStatus() {
-        return mStatus;
-    }
-    String getWhoareyou(){
-        return mWhoareyou;
-    }
-
-    void onDestroy(){
-        if (mPlayer != null) {
-            mPlayer.stop();
-            mPlayer.destroy();
-        }
     }
 }

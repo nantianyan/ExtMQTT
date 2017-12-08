@@ -36,11 +36,12 @@ public class MainActivity extends AppCompatActivity {
     private String mMyNick;
     private EditText mEtMyNick;
     private Button mButtonOnline;
-    private Button mButtonGetOnlineNodes;
+    private Button mButtonPlay;
     private ListView mListViewNodesOnline;
 
     private SurfaceView mSurfaceView;
     private PusherController mPusherController;
+    private Player mPlayer;
 
     private SurfaceView mSurfaceView2;
     private Pusher mPusher;
@@ -50,11 +51,19 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mEtMyNick = (EditText)findViewById(R.id.etMyNick);
+
+        mButtonOnline = (Button) findViewById(R.id.buttonConnect);
+        handleButtonOnOffLine();
+
+        mButtonPlay = (Button)findViewById(R.id.buttonPlay);
+        handleButtonPlay();
+
         mListViewNodesOnline = (ListView) findViewById(R.id.listViewNodesOnline);
+
         mSurfaceView = (SurfaceView) findViewById(R.id.surfaceView);
         mSurfaceView2 = (SurfaceView) findViewById(R.id.surfaceView2);
 
-        int showID = 1;
+        int showID = 3;
         ViewGroup.LayoutParams lp;
         switch (showID) {
             case 1:
@@ -73,6 +82,9 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
 
+        mPlayer = new Player(this, mSurfaceView);
+        mPlayer.init();
+
         mCloudMedia = new CloudMedia(mContext);
 
         /**
@@ -88,18 +100,12 @@ public class MainActivity extends AppCompatActivity {
          */
         connectToBroker();
 
-
-        /**
-         * button to trigger the test about on off line media node
-         */
-        handleButtonOnOffLine();
-
         /**
          * test install handler for local media node
          */
         installLocalMediaNodeHandler();
 
-        //testPlayer("rtmp://push.yangxudong.com/cloudmedia/CloudMedia_79128575502638");
+        //testPlayer("rtmp://push.yangxudong.com/cloudmedia/CloudMedia_5773026858881", null);
 
         //testPusher();
     }
@@ -145,7 +151,7 @@ public class MainActivity extends AppCompatActivity {
         mCloudMedia.setNodesStatusChangeListener(new CloudMedia.OnNodesStatusChange() {
             @Override
             public boolean OnNodesStatusChange(CloudMedia.NodesList nodesList) {
-                showOnlineNodes(nodesList);
+                handleListViewNodesOnline(nodesList);
                 return true;
             }
         });
@@ -171,8 +177,8 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
-    private void showOnlineNodes(final CloudMedia.NodesList nodesList){
-        Log.i(TAG, "call showOnlineNodes");
+    private void handleListViewNodesOnline(final CloudMedia.NodesList nodesList){
+        Log.i(TAG, "call handleListViewNodesOnline");
 
         mListViewNodesOnline.setAdapter(new ArrayAdapter<String>(mContext,
                 android.R.layout.simple_list_item_1,
@@ -186,47 +192,21 @@ public class MainActivity extends AppCompatActivity {
                         view.setBackgroundColor(Color.RED);
 
                         Log.d(TAG, "the item's ID is:" + nodesList.mNodesID.get(position));
-                        String targetID = nodesList.mNodesID.get(position);
+                        final String targetID = nodesList.mNodesID.get(position);
 
-
-                        if(mPusherController == null) {
-                            mPusherController = new PusherController(mCloudMedia, targetID);
-                            mPusherController.initPlayer(mContext, mSurfaceView);
-                        }
-
-                        if(mPusherController.getWhoareyou() != targetID) {
-                            //stop the original pusher
-                            mPusherController.onDestroy();
-                            mPusherController = null;
-
-                            mPusherController = new PusherController(mCloudMedia,targetID);
-                            mPusherController.initPlayer(mContext, mSurfaceView);
-                        }
-
-
-                        if(mPusherController.getStatus() == PusherController.PlayerStatus.STOPED){
-                            mPusherController.startPushMedia(new CloudMedia.SimpleActionListener() {
-                                @Override
-                                public boolean onResult(String result) {
-                                    return true;
-                                }
-                            });
-                        }
-                        if (mPusherController.getStatus() == PusherController.PlayerStatus.PLAYING) {
-                            mPusherController.stopPushMedia(new CloudMedia.SimpleActionListener() {
-                                @Override
-                                public boolean onResult(String result) {
-                                    return true;
-                                }
-                            });
-                        }
+                        mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(targetID);
+                        mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
+                            @Override
+                            public boolean onResult(String result) {
+                                return true;
+                            }
+                        });
                     }
                 }
         );
     }
 
     private void handleButtonOnOffLine(){
-        mButtonOnline = (Button) findViewById(R.id.buttonConnect);
         mButtonOnline.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -263,55 +243,75 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void installLocalMediaNodeHandler(){
-        mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
-        mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
+    private void handleButtonPlay() {
+        mButtonPlay.setOnClickListener(new View.OnClickListener() {
             @Override
-            public boolean onStartPushMedia(String params) {
-                Toast.makeText(mContext, "start push", Toast.LENGTH_LONG).show();
-
-                String url = "";
-                try {
-                    JSONObject mJSOONObj = new JSONObject(params);
-                    url = mJSOONObj.getString("url");
-                } catch (JSONException e) {
-                    e.printStackTrace();
+            public void onClick(View view) {
+                Log.d(TAG, "onclick button play");
+                if(mRemoteMediaNode != null) {
+                    String url = mRemoteMediaNode.getRtmpPlayUrl();
+                    //String url = mRemoteMediaNode.getFlvPlayUrl();
+                    mPlayer.play(url);
                 }
-                if (url == "") {
-                    Toast.makeText(getApplicationContext(), "RTMP Server IP is NULL!", Toast.LENGTH_SHORT);
-                    return false;
-                }
-
-                if(mPusher == null) {
-                    mPusher = new Pusher(mContext, mSurfaceView2);
-                    mPusher.initPusher(url);
-                } else {
-                    Log.d(TAG, "pusher is working....");
-                    return false;
-                }
-
-                return true;
-            }
-        });
-        mLocalMediaNode.setOnStopPushMediaActor(new LocalMediaNode.OnStopPushMedia() {
-            @Override
-            public boolean onStopPushMedia(String params) {
-                Toast.makeText(mContext, "stop push", Toast.LENGTH_LONG).show();
-                return true;
             }
         });
     }
 
-    private void testPlayer(String url){
+    private void installLocalMediaNodeHandler(){
+    mLocalMediaNode = mCloudMedia.declareLocalMediaNode();
+    mLocalMediaNode.setOnStartPushMediaActor(new LocalMediaNode.OnStartPushMedia() {
+        @Override
+        public boolean onStartPushMedia(String params) {
+            Toast.makeText(mContext, "start push", Toast.LENGTH_LONG).show();
+
+            String url = "";
+            try {
+                JSONObject mJParams = new JSONObject(params);
+                url = mJParams.getString("url");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            if (url == "") {
+                Toast.makeText(getApplicationContext(), "RTMP Server IP is NULL!", Toast.LENGTH_SHORT);
+                return false;
+            } else {
+                Log.d(TAG, "url:" + url);
+            }
+
+            //if(mPusher == null) {
+                mPusher = new Pusher(mContext, mSurfaceView2);
+                mPusher.prepareAndPush(url);
+                mPusher.startPush(url);
+            //} else {
+            //    Log.d(TAG, "pusher is working....");
+            //    return false;
+            //}
+
+            return true;
+        }
+    });
+    mLocalMediaNode.setOnStopPushMediaActor(new LocalMediaNode.OnStopPushMedia() {
+        @Override
+        public boolean onStopPushMedia(String params) {
+            Toast.makeText(mContext, "stop push", Toast.LENGTH_LONG).show();
+            return true;
+        }
+    });
+}
+
+    private void testPlayer(String url, String targetID){
         if(mPusherController == null) {
-            mPusherController = new PusherController(mCloudMedia, "123");
+            if(targetID == null) targetID="testPlayer";
+            mPusherController = new PusherController(mCloudMedia, targetID);
             mPusherController.initPlayer(mContext, mSurfaceView);
+            if(url == null) url = mPusherController.getRtmpPlayUrl();
             mPusherController.testPlayer(url);
         }
     }
 
     private void testPusher(){
         Pusher mPusher = new Pusher(mContext, mSurfaceView2);
-        mPusher.initPusher("rtmp://video-center.alivecdn.com/AppName/StreamName?vhost=push.yangxudong.com");
+        mPusher.prepareAndPush("rtmp://video-center.alivecdn.com/AppName/StreamName?vhost=push.yangxudong.com");
     }
 }

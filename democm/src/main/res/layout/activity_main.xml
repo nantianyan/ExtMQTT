@@ -14,12 +14,12 @@
                 <SurfaceView
                     android:id="@+id/surfaceView"
                     android:layout_width="match_parent"
-                    android:layout_height="100dp" />
+                    android:layout_height="150dp" />
 
                 <SurfaceView
                     android:id="@+id/surfaceView2"
                     android:layout_width="match_parent"
-                    android:layout_height="100dp" />
+                    android:layout_height="150dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -44,11 +44,11 @@
                     android:enabled="false"/>
 
                 <Button
-                    android:id="@+id/buttonGetOnlineNodes"
+                    android:id="@+id/buttonPlay"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="查看在线节点"
-                    android:enabled="false"/>
+                    android:text="播放"
+                    android:enabled="true"/>
 
                 <ListView
                     android:layout_width="wrap_content"
