@@ -185,8 +185,6 @@ public class PusherController {
             @Override
             public boolean onResult(String result) {
                 listener.onResult(result);
-
-                Log.i(TAG, "1111111111111111");
                 play();
                 return true;
             }

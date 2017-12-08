@@ -5,11 +5,11 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -17,18 +17,12 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.alivc.live.pusher.AlivcFpsEnum;
-import com.alivc.live.pusher.AlivcLivePushConfig;
-import com.alivc.live.pusher.AlivcLivePushError;
-import com.alivc.live.pusher.AlivcLivePushErrorListener;
-import com.alivc.live.pusher.AlivcLivePushInfoListener;
-import com.alivc.live.pusher.AlivcLivePushNetworkListener;
-import com.alivc.live.pusher.AlivcLivePusher;
-import com.alivc.live.pusher.AlivcPreviewOrientationEnum;
-import com.alivc.live.pusher.AlivcResolutionEnum;
 import com.example.cloudmedia.CloudMedia;
 import com.example.cloudmedia.LocalMediaNode;
 import com.example.cloudmedia.RemoteMediaNode;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "CloudMediaDemo";
@@ -46,7 +40,10 @@ public class MainActivity extends AppCompatActivity {
     private ListView mListViewNodesOnline;
 
     private SurfaceView mSurfaceView;
-    private PusherController mCurrentPusher;
+    private PusherController mPusherController;
+
+    private SurfaceView mSurfaceView2;
+    private Pusher mPusher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +52,26 @@ public class MainActivity extends AppCompatActivity {
         mEtMyNick = (EditText)findViewById(R.id.etMyNick);
         mListViewNodesOnline = (ListView) findViewById(R.id.listViewNodesOnline);
         mSurfaceView = (SurfaceView) findViewById(R.id.surfaceView);
+        mSurfaceView2 = (SurfaceView) findViewById(R.id.surfaceView2);
+
+        int showID = 1;
+        ViewGroup.LayoutParams lp;
+        switch (showID) {
+            case 1:
+                mSurfaceView2.setVisibility(View.GONE);
+                lp = mSurfaceView.getLayoutParams();
+                lp.height = 320; //lp.width = 240;
+                mSurfaceView.setLayoutParams(lp);
+                break;
+            case 2:
+                mSurfaceView.setVisibility(View.GONE);
+                lp = mSurfaceView2.getLayoutParams();
+                lp.height = 320; //lp.width = 240;
+                mSurfaceView2.setLayoutParams(lp);
+                break;
+            case 3:
+                break;
+        }
 
         mCloudMedia = new CloudMedia(mContext);
 
@@ -89,7 +106,10 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        mCurrentPusher.onDestroy();
+        if(mPusherController != null)
+            mPusherController.onDestroy();
+        if(mPusher != null)
+            mPusher.destroy();
 
         if(mCloudMedia != null) {
             mCloudMedia.disconnect();
@@ -168,36 +188,32 @@ public class MainActivity extends AppCompatActivity {
                         Log.d(TAG, "the item's ID is:" + nodesList.mNodesID.get(position));
                         String targetID = nodesList.mNodesID.get(position);
 
-                        /*
-                        if(mCurrentPusher == null) {
-                            mCurrentPusher = new PusherController(mCloudMedia, targetID);
-                            mCurrentPusher.initPlayer(mContext, mSurfaceView);
+
+                        if(mPusherController == null) {
+                            mPusherController = new PusherController(mCloudMedia, targetID);
+                            mPusherController.initPlayer(mContext, mSurfaceView);
                         }
 
-                        if(mCurrentPusher.getWhoareyou() != targetID) {
-                            // TODO: stop the original pusher
-                            mCurrentPusher = new PusherController(mCloudMedia,targetID);
-                            mCurrentPusher.initPlayer(mContext, mSurfaceView);
-                        }
-                        */
+                        if(mPusherController.getWhoareyou() != targetID) {
+                            //stop the original pusher
+                            mPusherController.onDestroy();
+                            mPusherController = null;
 
-                        if(mCurrentPusher != null) {
-                            mCurrentPusher.onDestroy();
-                            mCurrentPusher = null;
+                            mPusherController = new PusherController(mCloudMedia,targetID);
+                            mPusherController.initPlayer(mContext, mSurfaceView);
                         }
-                        mCurrentPusher = new PusherController(mCloudMedia, targetID);
-                        mCurrentPusher.initPlayer(mContext, mSurfaceView);
 
-                        if(mCurrentPusher.getStatus() == PusherController.PlayerStatus.STOPED){
-                            mCurrentPusher.startPushMedia(new CloudMedia.SimpleActionListener() {
+
+                        if(mPusherController.getStatus() == PusherController.PlayerStatus.STOPED){
+                            mPusherController.startPushMedia(new CloudMedia.SimpleActionListener() {
                                 @Override
                                 public boolean onResult(String result) {
                                     return true;
                                 }
                             });
                         }
-                        if (mCurrentPusher.getStatus() == PusherController.PlayerStatus.PLAYING) {
-                            mCurrentPusher.stopPushMedia(new CloudMedia.SimpleActionListener() {
+                        if (mPusherController.getStatus() == PusherController.PlayerStatus.PLAYING) {
+                            mPusherController.stopPushMedia(new CloudMedia.SimpleActionListener() {
                                 @Override
                                 public boolean onResult(String result) {
                                     return true;
@@ -215,6 +231,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (mCloudMedia != null) {
+                    mMyNick = mEtMyNick.getText().toString();
+
                     if (mIsOnline) {
                         mCloudMedia.putOffline(mMyNick, CloudMedia.CMRole.ROLE_PUSHER,
                                 new CloudMedia.SimpleActionListener() {
@@ -251,6 +269,27 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onStartPushMedia(String params) {
                 Toast.makeText(mContext, "start push", Toast.LENGTH_LONG).show();
+
+                String url = "";
+                try {
+                    JSONObject mJSOONObj = new JSONObject(params);
+                    url = mJSOONObj.getString("url");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                if (url == "") {
+                    Toast.makeText(getApplicationContext(), "RTMP Server IP is NULL!", Toast.LENGTH_SHORT);
+                    return false;
+                }
+
+                if(mPusher == null) {
+                    mPusher = new Pusher(mContext, mSurfaceView2);
+                    mPusher.initPusher(url);
+                } else {
+                    Log.d(TAG, "pusher is working....");
+                    return false;
+                }
+
                 return true;
             }
         });
@@ -264,15 +303,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void testPlayer(String url){
-        if(mCurrentPusher == null) {
-            mCurrentPusher = new PusherController(mCloudMedia, "123");
-            mCurrentPusher.initPlayer(mContext, mSurfaceView);
-            mCurrentPusher.testPlayer(url);
+        if(mPusherController == null) {
+            mPusherController = new PusherController(mCloudMedia, "123");
+            mPusherController.initPlayer(mContext, mSurfaceView);
+            mPusherController.testPlayer(url);
         }
     }
 
     private void testPusher(){
-        Pusher mPusher = new Pusher(mContext, mSurfaceView);
-        mPusher.initPusher();
+        Pusher mPusher = new Pusher(mContext, mSurfaceView2);
+        mPusher.initPusher("rtmp://video-center.alivecdn.com/AppName/StreamName?vhost=push.yangxudong.com");
     }
 }

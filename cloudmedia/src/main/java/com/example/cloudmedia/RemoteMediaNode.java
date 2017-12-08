@@ -84,6 +84,8 @@ public class RemoteMediaNode{
     }
 
     public boolean startPushMedia(final CloudMedia.SimpleActionListener listener){
+        mRtmpPublishUrl = generateRtmpPublishUrl();
+
         String params = "";
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "url", mRtmpPublishUrl);
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "expire_time", "100s");

@@ -24,6 +24,7 @@ public class Pusher {
     private Context mContext;
     final AlivcLivePusher mAlivcLivePusher = new AlivcLivePusher();
     private SurfaceView mSurfaceView;
+    private String mUrl;
 
     Pusher(Context context, SurfaceView surfaceView) {
         mContext = context;
@@ -36,7 +37,7 @@ public class Pusher {
                 holder.setKeepScreenOn(true);
                 try {
                     mAlivcLivePusher.startPreview(mSurfaceView);
-                    mAlivcLivePusher.startPush("rtmp://video-center.alivecdn.com/AppName/StreamName?vhost=push.yangxudong.com");
+                    mAlivcLivePusher.startPush(mUrl);
                 } catch (IllegalArgumentException e) {
                     e.toString();
                 } catch (IllegalStateException e) {
@@ -54,7 +55,9 @@ public class Pusher {
             }
         });
     }
-    public void initPusher(){
+    public void initPusher(String url){
+        mUrl = url;
+
         initSurface();
 
         AlivcLivePushConfig mAlivcLivePushConfig = new AlivcLivePushConfig();
