@@ -1,5 +1,7 @@
 package com.example.p2pmqtt;
 
+import android.util.Log;
+
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -9,17 +11,22 @@ import org.json.JSONObject;
  */
 
 public abstract class P2PMqttRequestHandler {
+    private static final String TAG = "P2PMqttRequestHandler";
     private P2PMqtt mP2PMqtt;
     private volatile String mMqttTopic;
     private volatile MqttMessage mMqttMessage;
     private volatile JSONObject mJrpc;
 
-    public abstract String HandleJrpc(JSONObject jrpc);
+    public abstract String HandleJrpc(final JSONObject jrpc);
 
     public void onMqttMessage(P2PMqtt p2pmqtt, String topic, MqttMessage message) {
         mP2PMqtt = p2pmqtt;
         mMqttTopic = topic;
         mMqttMessage = message;
+
+        Log.d(TAG, "onMqttMessage:");
+        Log.d(TAG, "\t topic:" + mMqttTopic);
+        Log.d(TAG, "\t message:" + mMqttMessage);
 
         try {
             mJrpc = new JSONObject(message.toString());
@@ -32,9 +39,13 @@ public abstract class P2PMqttRequestHandler {
     }
 
     private void sendReply(String result) {
+        Log.d(TAG, "sendReply:");
+        Log.d(TAG, "\t result:" + result);
+
         int id = 0;
         try {
             id = mJrpc.getInt("id");
+            Log.d(TAG, "\t id:" + id);
         } catch (JSONException e) {
             e.printStackTrace();
         }

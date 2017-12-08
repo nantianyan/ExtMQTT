@@ -33,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_HELLO = 0;
 
     private class HelloHandler extends P2PMqttRequestHandler {
-        public String HandleJrpc (JSONObject jrpc){
+        public String HandleJrpc (final JSONObject jrpc){
             try {
                 Log.d(TAG, "this is hello's topicHandle");
                 String method = jrpc.getString("method");

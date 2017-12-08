@@ -19,12 +19,15 @@ public class LocalMediaNode{
 
 
     private class StartPushMediaHandler extends P2PMqttRequestHandler {
-        public String HandleJrpc (JSONObject jrpc){
+        public String HandleJrpc (final JSONObject jrpc){
             try {
                 Log.d(TAG, "this is StartPushMediaHandler's topicHandle");
                 String method = jrpc.getString("method");
                 String params = jrpc.getString("params");
+                String id = jrpc.getString("id");
                 Log.d(TAG, "method:" + method);
+                Log.d(TAG, "params:" + params);
+                Log.d(TAG, "id:" + id);
                 if(mOnStartPushMediaActor != null) {
                     if(mOnStartPushMediaActor.onStartPushMedia(params)) {
                         return  "OK";
@@ -42,7 +45,7 @@ public class LocalMediaNode{
     }
 
     private class StopPushMediaHandler extends P2PMqttRequestHandler {
-        public String HandleJrpc (JSONObject jrpc){
+        public String HandleJrpc (final JSONObject jrpc){
             try {
                 Log.d(TAG, "this is StopPushMediaHandler's topicHandle");
                 String method = jrpc.getString("method");
