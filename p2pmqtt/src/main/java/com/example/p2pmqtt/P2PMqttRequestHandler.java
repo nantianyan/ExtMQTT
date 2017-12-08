@@ -42,9 +42,9 @@ public abstract class P2PMqttRequestHandler {
         Log.d(TAG, "sendReply:");
         Log.d(TAG, "\t result:" + result);
 
-        int id = 0;
+        String id = "";
         try {
-            id = mJrpc.getInt("id");
+            id = mJrpc.getString("id");
             Log.d(TAG, "\t id:" + id);
         } catch (JSONException e) {
             e.printStackTrace();
