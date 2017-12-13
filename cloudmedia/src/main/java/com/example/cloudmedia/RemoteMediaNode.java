@@ -2,6 +2,7 @@ package com.example.cloudmedia;
 
 import android.util.Log;
 
+import com.example.p2pmqtt.MqttTopicHandler;
 import com.example.p2pmqtt.P2PMqtt;
 import com.example.p2pmqtt.P2PMqttAsyncRequest;
 import com.example.p2pmqtt.P2PMqttRequest;
@@ -100,6 +101,23 @@ public class RemoteMediaNode{
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "expire_time", "100s");
         params = P2PMqtt.MyJsonString.addJsonBrace(params);
         return mCloudMedia.sendRequest(mWhoareyou, REQUEST_START_PUSH_MEDIA, params, listener);
+    }
+
+    public interface IStatusListener {
+        void onStatus(String status);
+    }
+
+    public void setStatusListener(final IStatusListener listener) {
+        if(listener == null){
+            return;
+        }
+        String topic = mWhoareyou + "/cm/nodes";
+        mCloudMedia.getMqtt().installTopicHandler(topic, new MqttTopicHandler() {
+            @Override
+            public void onMqttMessage(String jstr) {
+                listener.onStatus(jstr);
+            }
+        });
     }
 
     public boolean setPushParams(String params){

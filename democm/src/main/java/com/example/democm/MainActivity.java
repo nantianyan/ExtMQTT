@@ -195,6 +195,14 @@ public class MainActivity extends AppCompatActivity {
                         final String targetID = nodesList.mNodesID.get(position);
 
                         mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(targetID);
+
+                        mRemoteMediaNode.setStatusListener(new RemoteMediaNode.IStatusListener() {
+                            @Override
+                            public void onStatus(String status) {
+                                Log.d(TAG, "onStatus: " + status);
+                            }
+                        });
+
                         mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
                             @Override
                             public boolean onResult(String result) {

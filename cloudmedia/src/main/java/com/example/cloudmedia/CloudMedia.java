@@ -420,4 +420,8 @@ public class CloudMedia {
             }
         });
     }
+
+    public P2PMqtt getMqtt(){
+        return mExtMqttClient;
+    }
 }
