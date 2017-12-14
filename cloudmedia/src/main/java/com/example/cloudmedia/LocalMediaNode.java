@@ -15,6 +15,7 @@ import org.json.JSONObject;
 
 public class LocalMediaNode{
     private static final String TAG = "LocalMediaNode";
+    private CloudMedia mCloudMedia;
     private P2PMqtt mExtMqttClient;
 
 
@@ -30,6 +31,14 @@ public class LocalMediaNode{
                 Log.d(TAG, "id:" + id);
                 if(mOnStartPushMediaActor != null) {
                     if(mOnStartPushMediaActor.onStartPushMedia(params)) {
+                        mCloudMedia.updateMyStatus(CloudMedia.CMStatus.PUSHING, new CloudMedia.SimpleActionListener() {
+                            @Override
+                            public boolean onResult(String result) {
+                                Log.d(TAG, "update my status to pushing");
+                                return true;
+                            }
+                        });
+
                         return  "OK";
                     } else {
                         return "ERROR";
@@ -53,6 +62,13 @@ public class LocalMediaNode{
                 Log.d(TAG, "method:" + method);
                 if(mOnStopPushMediaActor != null) {
                     if(mOnStopPushMediaActor.onStopPushMedia(params)){
+                        mCloudMedia.updateMyStatus(CloudMedia.CMStatus.UNKNOWN, new CloudMedia.SimpleActionListener() {
+                            @Override
+                            public boolean onResult(String result) {
+                                Log.d(TAG, "update my status to unknown");
+                                return true;
+                            }
+                        });
                         return "OK";
                     }else {
                         return "ERROR";
@@ -67,8 +83,9 @@ public class LocalMediaNode{
         }
     }
 
-    LocalMediaNode(P2PMqtt mqttClient){
-        mExtMqttClient = mqttClient;
+    LocalMediaNode(CloudMedia cm){
+        mCloudMedia = cm;
+        mExtMqttClient = cm.getMqtt();
 
         P2PMqttRequestHandler handler1 = new StartPushMediaHandler();
         mExtMqttClient.installRequestHandler(RemoteMediaNode.REQUEST_START_PUSH_MEDIA, handler1);

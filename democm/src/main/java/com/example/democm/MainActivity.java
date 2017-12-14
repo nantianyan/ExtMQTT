@@ -179,6 +179,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void handleListViewNodesOnline(final CloudMedia.NodesList nodesList){
         Log.i(TAG, "call handleListViewNodesOnline");
+        for (CloudMedia.NodesList.Node e: nodesList.get()) {
+            Log.d(TAG, "nick: " + e.getNick());
+            Log.d(TAG, "status: " + e.getStatus());
+        }
 
         mListViewNodesOnline.setAdapter(new ArrayAdapter<String>(mContext,
                 android.R.layout.simple_list_item_1,
@@ -193,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
 
                         Log.d(TAG, "the item's ID is:" + nodesList.mNodesID.get(position));
                         final String targetID = nodesList.mNodesID.get(position);
+                        Log.d(TAG, "the item's targetID is: " + targetID);
 
                         mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(targetID);
 

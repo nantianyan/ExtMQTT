@@ -45,7 +45,8 @@ public class CloudMedia {
 
     public enum CMStatus{
         PUSHING,
-        PULLING;
+        PULLING,
+        UNKNOWN;
     }
 
     public enum CMRole{
@@ -297,7 +298,7 @@ public class CloudMedia {
     }
 
     public LocalMediaNode declareLocalMediaNode() {
-        return new LocalMediaNode(mExtMqttClient);
+        return new LocalMediaNode(this);
     }
 
     // not implemented yet.
@@ -331,6 +332,7 @@ public class CloudMedia {
             private String mNick;
             private String mLocation;
             private String mLastUpdateTime;
+            private String mStatus;
 
             Node(JSONObject jnode){
                 try {
@@ -338,6 +340,7 @@ public class CloudMedia {
                     mNick = jnode.getString("nick");
                     mLocation = jnode.getString("location");
                     mLastUpdateTime = jnode.getString("time");
+                    mStatus = jnode.getString("status");
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -348,12 +351,23 @@ public class CloudMedia {
                 Log.d(TAG, "nick: " + mNick);
                 Log.d(TAG, "location: " + mLocation);
                 Log.d(TAG, "time: " + mLastUpdateTime);
+                Log.d(TAG, "status: " + mStatus);
+            }
+            public String getStatus(){
+                return mStatus;
+            }
+            public String getNick(){
+                return mNick;
+            }
+            public String getWhoami(){
+                return mWhoami;
             }
         }
 
         private List<Node> mNodesList = new ArrayList<Node>();
         public List<String> mNodesID = new ArrayList<String>();
         public List<String> mNodesNick = new ArrayList<String>();
+        public List<String> mNodesStatus = new ArrayList<String>();
 
         public NodesList(String jsonStr) {
             try {
@@ -365,6 +379,7 @@ public class CloudMedia {
                     mNodesList.add(node);
                     mNodesID.add(node.mWhoami);
                     mNodesNick.add(node.mNick);
+                    mNodesStatus.add(node.mStatus);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -378,6 +393,8 @@ public class CloudMedia {
         public void clear(){
             mNodesID.clear();
             mNodesNick.clear();
+            mNodesStatus.clear();
+
             mNodesList.clear();
         }
 
