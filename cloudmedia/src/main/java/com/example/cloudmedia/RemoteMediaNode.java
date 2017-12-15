@@ -107,19 +107,6 @@ public class RemoteMediaNode{
         void onStatus(String status);
     }
 
-    public void setStatusListener(final IStatusListener listener) {
-        if(listener == null){
-            return;
-        }
-        String topic = mWhoareyou + "/cm/nodes";
-        mCloudMedia.getMqtt().installTopicHandler(topic, new MqttTopicHandler() {
-            @Override
-            public void onMqttMessage(String jstr) {
-                listener.onStatus(jstr);
-            }
-        });
-    }
-
     public boolean setPushParams(String params){
         return true;
     }

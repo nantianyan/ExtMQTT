@@ -18,7 +18,6 @@ public class LocalMediaNode{
     private CloudMedia mCloudMedia;
     private P2PMqtt mExtMqttClient;
 
-
     private class StartPushMediaHandler extends P2PMqttRequestHandler {
         public String HandleJrpc (final JSONObject jrpc){
             try {
@@ -31,14 +30,6 @@ public class LocalMediaNode{
                 Log.d(TAG, "id:" + id);
                 if(mOnStartPushMediaActor != null) {
                     if(mOnStartPushMediaActor.onStartPushMedia(params)) {
-                        mCloudMedia.updateMyStatus(CloudMedia.CMStatus.PUSHING, new CloudMedia.SimpleActionListener() {
-                            @Override
-                            public boolean onResult(String result) {
-                                Log.d(TAG, "update my status to pushing");
-                                return true;
-                            }
-                        });
-
                         return  "OK";
                     } else {
                         return "ERROR";
@@ -62,13 +53,6 @@ public class LocalMediaNode{
                 Log.d(TAG, "method:" + method);
                 if(mOnStopPushMediaActor != null) {
                     if(mOnStopPushMediaActor.onStopPushMedia(params)){
-                        mCloudMedia.updateMyStatus(CloudMedia.CMStatus.UNKNOWN, new CloudMedia.SimpleActionListener() {
-                            @Override
-                            public boolean onResult(String result) {
-                                Log.d(TAG, "update my status to unknown");
-                                return true;
-                            }
-                        });
                         return "OK";
                     }else {
                         return "ERROR";

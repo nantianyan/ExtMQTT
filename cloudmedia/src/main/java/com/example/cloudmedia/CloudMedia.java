@@ -44,8 +44,8 @@ public class CloudMedia {
     private OnNodesStatusChange mNodeStatusLisener;
 
     public enum CMStatus{
-        PUSHING("pushing"),
-        PULLING("pulling"),
+        PUBLISH("publish"),
+        PUBLISH_DONE("publish_done"),
         ONLINE("online"),
         OFFLINE("offline"),
         UNKNOWN("unknown");

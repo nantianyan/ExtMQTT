@@ -199,16 +199,13 @@ public class MainActivity extends AppCompatActivity {
                         final String targetID = nodesList.mNodesID.get(position);
                         Log.d(TAG, "the item's targetID is: " + targetID);
 
+                        final String status = nodesList.mNodesStatus.get(position);
+                        Log.d(TAG, "the item's status is: " + status);
+
                         mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(targetID);
 
-                        mRemoteMediaNode.setStatusListener(new RemoteMediaNode.IStatusListener() {
-                            @Override
-                            public void onStatus(String status) {
-                                Log.d(TAG, "onStatus: " + status);
-                            }
-                        });
-
-                        if(nodesList.mNodesStatus.get(position) == CloudMedia.CMStatus.PUSHING.str()) {
+                        if(nodesList.mNodesStatus.get(position) == CloudMedia.CMStatus.PUBLISH.str()) {
+                            Log.d(TAG, "the item's going to stop push");
                             mRemoteMediaNode.stopPushMedia(new CloudMedia.SimpleActionListener() {
                                 @Override
                                 public boolean onResult(String result) {
@@ -216,6 +213,8 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             });
                         } else {
+                            Log.d(TAG, "the item's going to start push");
+
                             mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
                                 @Override
                                 public boolean onResult(String result) {
