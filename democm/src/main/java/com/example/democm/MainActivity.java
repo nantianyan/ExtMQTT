@@ -208,12 +208,22 @@ public class MainActivity extends AppCompatActivity {
                             }
                         });
 
-                        mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
-                            @Override
-                            public boolean onResult(String result) {
-                                return true;
-                            }
-                        });
+                        if(nodesList.mNodesStatus.get(position) == CloudMedia.CMStatus.PUSHING.str()) {
+                            mRemoteMediaNode.stopPushMedia(new CloudMedia.SimpleActionListener() {
+                                @Override
+                                public boolean onResult(String result) {
+                                    return true;
+                                }
+                            });
+                        } else {
+                            mRemoteMediaNode.startPushMedia(new CloudMedia.SimpleActionListener() {
+                                @Override
+                                public boolean onResult(String result) {
+                                    return true;
+                                }
+                            });
+                        }
+
                     }
                 }
         );

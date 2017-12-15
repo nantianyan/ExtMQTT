@@ -100,7 +100,7 @@ public class RemoteMediaNode{
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "url", mRtmpPublishUrl);
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "expire_time", "100s");
         params = P2PMqtt.MyJsonString.addJsonBrace(params);
-        return mCloudMedia.sendRequest(mWhoareyou, REQUEST_START_PUSH_MEDIA, params, listener);
+        return mCloudMedia.sendRequest(mWhoareyou, REQUEST_STOP_PUSH_MEDIA, params, listener);
     }
 
     public interface IStatusListener {
