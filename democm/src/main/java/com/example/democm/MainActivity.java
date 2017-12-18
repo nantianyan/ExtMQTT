@@ -204,7 +204,8 @@ public class MainActivity extends AppCompatActivity {
 
                         mRemoteMediaNode = mCloudMedia.declareRemoteMediaNode(targetID);
 
-                        if(nodesList.mNodesStatus.get(position) == CloudMedia.CMStatus.PUBLISH.str()) {
+                        Log.d(TAG, "???status:" + CloudMedia.CMStatus.PUBLISH.str());
+                        if(nodesList.mNodesStatus.get(position).equals("publish")) {
                             Log.d(TAG, "the item's going to stop push");
                             mRemoteMediaNode.stopPushMedia(new CloudMedia.SimpleActionListener() {
                                 @Override
