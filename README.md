@@ -20,3 +20,5 @@ as showed in the demo activity, the main interface is like the following:
                 mMqttClient.sendRequest("controller", "hello", "this is hello's param");
             }
         });
+
+TEST!
