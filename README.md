@@ -21,4 +21,3 @@ as showed in the demo activity, the main interface is like the following:
             }
         });
 
-TEST!
