@@ -45,8 +45,10 @@ public class CloudMedia {
     private String mMyVendorID;
     private String mMyVendorNick;
 
-    private FullActionListener mConnectLisenser;
     private OnNodesListChange mNodesListChangeLisener;
+
+    public static final String RPCSuccess = "OK";
+    public static final String RPCFailure = "ERROR";
 
     public enum CMStatus{
         ONLINE("online"),
@@ -137,7 +139,7 @@ public class CloudMedia {
         return new LiveServerNode();
     }
 
-    public boolean connect(final String nick, final CMRole role, final FullActionListener listener) {
+    public boolean connect(final String nick, final CMRole role, final RPCResultListener listener) {
         mBrokerUrl = getBrokerUrlFromServer();
         String myID = getIDFromServer();
         mMyNode = new Node(myID, nick, role, FIELD_GROUPID_DEFAULT, FIELD_GROUPNICK_DEFAULT);
@@ -146,10 +148,10 @@ public class CloudMedia {
         mExtMqttClient.connect(mBrokerUrl, new P2PMqtt.IFullActionListener() {
             @Override
             public void onSuccess(String params) {
-                putOnline(new SimpleActionListener() {
+                putOnline(new RPCResultListener() {
                     @Override
-                    public boolean onResult(String result) {
-                        listener.onSuccess("OK");
+                    public void onSuccess(String params) {
+                        listener.onSuccess(RPCSuccess);
                         mExtMqttClient.installTopicHandler(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE),
                             new MqttTopicHandler() {
                                 @Override
@@ -158,15 +160,15 @@ public class CloudMedia {
                                         mNodesListChangeLisener.OnNodesListChange(new NodesList(jstr));
                                 }
                             });
-
-                        return true;
                     }
+                    @Override
+                    public void onFailure(String params) {listener.onFailure(RPCFailure);}
                 });
             }
 
             @Override
             public void onFailure(String params) {
-                listener.onFailure("ERROR");
+                listener.onFailure(RPCFailure);
             }
         });
 
@@ -180,7 +182,7 @@ public class CloudMedia {
         return  true;
     }
 
-    public boolean updateStreamStatus(CMStreamStatus status, final SimpleActionListener listener) {
+    public boolean updateStreamStatus(CMStreamStatus status, final RPCResultListener listener) {
         return updateCMField(CMField.STREAM_STATUS, status.str(), listener);
     }
 
@@ -188,11 +190,7 @@ public class CloudMedia {
         mNodesListChangeLisener = listener;
     }
 
-    public interface SimpleActionListener {
-        boolean onResult(String result);
-    }
-
-    public interface FullActionListener {
+    public interface RPCResultListener {
         public void onSuccess(String params);
         public void onFailure(String params);
     }
@@ -265,7 +263,7 @@ public class CloudMedia {
     }
 
     public boolean sendRequest(String whoareyou, String method,
-                                String params, final CloudMedia.SimpleActionListener listener) {
+                                String params, final RPCResultListener listener) {
         Log.d(TAG, "sendRequest to: " + whoareyou +
                 ", calling: " + method +
                 ", params: " + params);
@@ -280,22 +278,22 @@ public class CloudMedia {
             request.setListener(new P2PMqtt.IMqttRpcActionListener() {
                 @Override
                 public P2PMqtt.ResultCode onResult(JSONObject jrpc) {
-                    String result = null;
                     try {
-                        result = jrpc.getString("result");
-                        Log.d(TAG, "jrpc's result is: " + result);
-
-                        if (listener.onResult(result)) {
+                        Log.d(TAG, "jrpc: " + jrpc.toString());
+                        // normal
+                        if (jrpc.has("result")) {
+                            listener.onSuccess(jrpc.getString("result"));
                             return P2PMqtt.ResultCode.ERROR_None;
-                        } else {
-                            return P2PMqtt.ResultCode.ERROR_Unknown;
+                        } else if (jrpc.has("error")){
+                            listener.onFailure(jrpc.getString("error"));
+                            return P2PMqtt.ResultCode.ERROR_None;
                         }
                     } catch (JSONException e) {
                         Log.d(TAG, "illeagle JSON!");
                         e.printStackTrace();
                     }
 
-                    return P2PMqtt.ResultCode.ERROR_None;
+                    return P2PMqtt.ResultCode.ERROR_BadData;
                 }
             });
         }
@@ -319,7 +317,7 @@ public class CloudMedia {
         return mMyVendorID + "_" + groupID + "_" + nodeID;
     }
 
-    private boolean putOnline(final CloudMedia.SimpleActionListener listener) {
+    private boolean putOnline(final RPCResultListener listener) {
             String params = "";
             params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ID.str(), mMyNode.getID());
             params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.NICK.str(), mMyNode.getNick());
@@ -336,11 +334,11 @@ public class CloudMedia {
             return sendRequest(whoisMC(), RPCMethod.ONLINE, params, listener);
     }
 
-    private boolean putOffline(final CloudMedia.SimpleActionListener listener) {
+    private boolean putOffline(final RPCResultListener listener) {
         return sendRequest(whoisMC(), RPCMethod.OFFLINE, null, listener);
     }
 
-    private boolean updateCMField(CMField filed, String newValue, final SimpleActionListener listener) {
+    private boolean updateCMField(CMField filed, String newValue, final RPCResultListener listener) {
         String params = "";
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "field", filed.str());
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "value", newValue);

@@ -28,7 +28,7 @@ public class RemoteMediaNode{
         return new RemoteMediaNode(cm, whoareyou);
     }
 
-    public boolean startPushMedia(final CloudMedia.SimpleActionListener listener){
+    public boolean startPushMedia(final CloudMedia.RPCResultListener listener){
         String params = "";
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "target-id", mWhoareyou);
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "expire-time", "100s");
@@ -37,7 +37,7 @@ public class RemoteMediaNode{
         return mCloudMedia.sendRequest(mCloudMedia.whoisMC(), RPCMethod.START_PUSH_MEDIA, params, listener);
     }
 
-    public boolean stopPushMedia(final CloudMedia.SimpleActionListener listener){
+    public boolean stopPushMedia(final CloudMedia.RPCResultListener listener){
         String params = "";
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "target-id", mWhoareyou);
         params = P2PMqtt.MyJsonString.addJsonBrace(params);

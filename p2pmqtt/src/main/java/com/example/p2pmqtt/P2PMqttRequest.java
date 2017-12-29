@@ -77,21 +77,8 @@ public abstract class P2PMqttRequest implements P2PMqtt.IMqttRpcActionListener {
     public static final P2PMqtt.IMqttRpcActionListener SIMPLE_LISTENER = new P2PMqtt.IMqttRpcActionListener() {
         @Override
         public P2PMqtt.ResultCode onResult(JSONObject jrpc) {
-            String result = null;
-            try {
-                result = jrpc.getString("result");
-            } catch (JSONException e) {
-                Log.d(TAG, "illeagle JSON!");
-                e.printStackTrace();
-            }
-            Log.d(TAG, "jrpc's result is: " + result);
-            if (result.equalsIgnoreCase("OK")) {
-                Log.i(TAG, "\t OK!");
-                return P2PMqtt.ResultCode.ERROR_None;
-            } else {
-                Log.i(TAG, "\t Fail!");
-                return P2PMqtt.ResultCode.ERROR_Unknown;
-            }
+            Log.d(TAG, "Default listener,jrpc: " + jrpc.toString());
+            return P2PMqtt.ResultCode.ERROR_None;
         }
     };
 }

@@ -34,17 +34,17 @@ public class LocalMediaNode{
                 Log.d(TAG, "id:" + id);
                 if(mOnStartPushMediaActor != null) {
                     if(mOnStartPushMediaActor.onStartPushMedia(params)) {
-                        return  "OK";
+                        return  CloudMedia.RPCSuccess;
                     } else {
-                        return "ERROR";
+                        return CloudMedia.RPCFailure;
                     }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
-                return "ERROR";
+                return CloudMedia.RPCFailure;
             }
 
-            return "OK";
+            return CloudMedia.RPCSuccess;
         }
     }
 
@@ -57,17 +57,17 @@ public class LocalMediaNode{
                 Log.d(TAG, "method:" + method);
                 if(mOnStopPushMediaActor != null) {
                     if(mOnStopPushMediaActor.onStopPushMedia(params)){
-                        return "OK";
+                        return CloudMedia.RPCSuccess;
                     }else {
-                        return "ERROR";
+                        return CloudMedia.RPCFailure;
                     }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
-                return "ERROR";
+                return CloudMedia.RPCFailure;
             }
 
-            return "OK";
+            return CloudMedia.RPCSuccess;
         }
     }
 
