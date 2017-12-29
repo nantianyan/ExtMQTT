@@ -4,8 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/ExtMQTT.iml" filepath="$PROJECT_DIR$/ExtMQTT.iml" />
       <module fileurl="file://$PROJECT_DIR$/cloudmedia/cloudmedia.iml" filepath="$PROJECT_DIR$/cloudmedia/cloudmedia.iml" />
-      <module fileurl="file://$PROJECT_DIR$/demo/demo.iml" filepath="$PROJECT_DIR$/demo/demo.iml" />
-      <module fileurl="file://$PROJECT_DIR$/democm/democm.iml" filepath="$PROJECT_DIR$/democm/democm.iml" />
+      <module fileurl="file://D:\stream-media\ExtMQTT\democm\democm.iml" filepath="D:\stream-media\ExtMQTT\democm\democm.iml" />
       <module fileurl="file://$PROJECT_DIR$/p2pmqtt/p2pmqtt.iml" filepath="$PROJECT_DIR$/p2pmqtt/p2pmqtt.iml" />
     </modules>
   </component>

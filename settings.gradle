@@ -1,1 +1,2 @@
-include ':demo', ':cloudmedia', ':democm', ':p2pmqtt'
+//include ':demo', ':cloudmedia', ':p2pmqtt'
+include ':cloudmedia', ':p2pmqtt'

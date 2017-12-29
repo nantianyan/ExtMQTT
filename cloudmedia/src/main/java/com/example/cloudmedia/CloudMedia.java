@@ -7,6 +7,7 @@ import com.example.p2pmqtt.MqttTopicHandler;
 import com.example.p2pmqtt.P2PMqtt;
 import com.example.p2pmqtt.P2PMqttAsyncRequest;
 import com.example.p2pmqtt.P2PMqttRequest;
+import com.example.p2pmqtt.P2PMqttRequestHandler;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,27 +32,45 @@ import java.util.List;
 
 public class CloudMedia {
     private static final String TAG = "CloudMedia";
-    private String mRole = CMRole.ROLE_NONE.str();
-    public static final String TOPIC_NODES_ONLINE = "/nodes_online/cm"; // role +
-    public static final String TOPIC_PUSHER_ONLINE = CMRole.ROLE_PUSHER.str() + TOPIC_NODES_ONLINE;
+    private static final String FIELD_UNKNOWN = "unknown";
+    private static final String FIELD_GROUPID_DEFAULT = "00000000";
+    private static final String FIELD_GROUPNICK_DEFAULT = "Default Group";
+    private static final String FIELD_VENDORID_DEFAULT = "00000000";
+    private static final String FIELD_VENDORNICK_DEFAULT = "CM Team";
 
     private Context mContext;
     private P2PMqtt mExtMqttClient;
     private String mBrokerUrl;
-    private  String mMyID;
+    private Node mMyNode;
+    private String mMyVendorID;
+    private String mMyVendorNick;
 
     private FullActionListener mConnectLisenser;
-    private OnNodesStatusChange mNodeStatusLisener;
+    private OnNodesListChange mNodesListChangeLisener;
 
     public enum CMStatus{
-        PUBLISH("publish"),
-        PUBLISH_DONE("publish_done"),
         ONLINE("online"),
         OFFLINE("offline"),
-        UNKNOWN("unknown");
+        UNKNOWN(FIELD_UNKNOWN);
 
         private final String mStr;
         CMStatus(String str){
+            mStr = str;
+        }
+        public String str(){
+            return mStr;
+        }
+    }
+
+    public enum CMStreamStatus{
+        PUSHING("pushing"),
+        PUSHING_CLOSE("pushing_close"),
+        PULLING("pulling"),
+        PULLING_CLOSE("pulling_close"),
+        UNKNOWN(FIELD_UNKNOWN);
+
+        private final String mStr;
+        CMStreamStatus(String str){
             mStr = str;
         }
         public String str(){
@@ -63,8 +82,9 @@ public class CloudMedia {
         ROLE_ALL("all"),
         ROLE_PULLER("puller"),
         ROLE_PUSHER("pusher"),
+        ROLE_MC("media_controller"),
         ROLE_TEST("tester"),
-        ROLE_NONE("none");
+        UNKNOWN(FIELD_UNKNOWN);
 
         private final String mRoleName;
         CMRole(String roleName) {
@@ -76,12 +96,15 @@ public class CloudMedia {
     }
 
     public enum CMField{
-        ID("whoami"),
-        TIME("time"),
-        LOCATION("location"),
+        ID("id"),
         NICK("nick"),
         ROLE("role"),
-        STATUS("status");
+        LOCATION("location"),
+        STREAM_STATUS("stream_status"),
+        VENDOR_ID("vendor_id"),
+        VENDOR_NICK("vendor_nick"),
+        GROUP_ID("group_id"),
+        GROUP_NICK("group_nick");
 
         private final String mFiledName;
         CMField(String filedName) {
@@ -92,12 +115,103 @@ public class CloudMedia {
         }
     }
 
+    public CloudMedia(Context context) {
+        mContext = context;
+        mMyVendorID = FIELD_VENDORID_DEFAULT;
+        mMyVendorNick = FIELD_VENDORNICK_DEFAULT;
+    }
+
+    public RemoteMediaNode declareRemoteMediaNode(Node remoteNode){
+        return RemoteMediaNode.create(this, whoareyou(remoteNode.getGroupID(), remoteNode.getID()));
+    }
+
+    public LocalMediaNode declareLocalMediaNode() {
+        return new LocalMediaNode(this);
+    }
+
+    // not implemented yet.
+    // in our original design, LiveServer interface should exposed from MQTT media controller
+    // yet another way is tack to cloud live media server directly.
+    // further more, client may have no idea about his interface?
+    public LiveServerNode declareLiveServer(){
+        return new LiveServerNode();
+    }
+
+    public boolean connect(final String nick, final CMRole role, final FullActionListener listener) {
+        mBrokerUrl = getBrokerUrlFromServer();
+        String myID = getIDFromServer();
+        mMyNode = new Node(myID, nick, role, FIELD_GROUPID_DEFAULT, FIELD_GROUPNICK_DEFAULT);
+        mExtMqttClient = new P2PMqtt(mContext, whoami(), "12345");
+
+        mExtMqttClient.connect(mBrokerUrl, new P2PMqtt.IFullActionListener() {
+            @Override
+            public void onSuccess(String params) {
+                putOnline(new SimpleActionListener() {
+                    @Override
+                    public boolean onResult(String result) {
+                        listener.onSuccess("OK");
+                        mExtMqttClient.installTopicHandler(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE),
+                            new MqttTopicHandler() {
+                                @Override
+                                public void onMqttMessage(String jstr) {
+                                    if (mNodesListChangeLisener != null)
+                                        mNodesListChangeLisener.OnNodesListChange(new NodesList(jstr));
+                                }
+                            });
+
+                        return true;
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(String params) {
+                listener.onFailure("ERROR");
+            }
+        });
+
+
+        return true;
+    }
+
+    public boolean disconnect() {
+        putOffline(null);
+        mExtMqttClient.disconnect();
+        return  true;
+    }
+
+    public boolean updateStreamStatus(CMStreamStatus status, final SimpleActionListener listener) {
+        return updateCMField(CMField.STREAM_STATUS, status.str(), listener);
+    }
+
+    public void setNodesListChangeListener(final OnNodesListChange listener) {
+        mNodesListChangeLisener = listener;
+    }
+
+    public interface SimpleActionListener {
+        boolean onResult(String result);
+    }
+
+    public interface FullActionListener {
+        public void onSuccess(String params);
+        public void onFailure(String params);
+    }
+
+    /**
+     * Interface definition for listener of nodes status changes
+     * such as online/offline
+     */
+    public interface OnNodesListChange{
+        boolean OnNodesListChange(NodesList nodesList);
+    }
+
+
     /**
      * get uniqure ID from server.
      * NOTE: this function cannot be called from main thread!
      * @return uniqure id managed by a cloud server
      */
-    private String getIDFromServer(){
+    static private String getIDFromServer(){
         if(false) {
             URL url = null;
             HttpURLConnection conn = null;
@@ -146,18 +260,18 @@ public class CloudMedia {
         }
     }
 
-    private String getBrokerUrlFromServer(){
+    static private String getBrokerUrlFromServer(){
         return "tcp://139.224.128.15:1883";
     }
 
-    public boolean sendRequest(String targetID, String method,
+    public boolean sendRequest(String whoareyou, String method,
                                 String params, final CloudMedia.SimpleActionListener listener) {
-        Log.d(TAG, "sendRequest to: " + targetID +
+        Log.d(TAG, "sendRequest to: " + whoareyou +
                 ", calling: " + method +
                 ", params: " + params);
 
         P2PMqttAsyncRequest request = new P2PMqttAsyncRequest();
-        request.setWhoareyou(targetID);
+        request.setWhoareyou(whoareyou);
         request.setMethodName(method);
         request.setMethodParams(params);
         if(listener == null) {
@@ -189,258 +303,227 @@ public class CloudMedia {
         return mExtMqttClient.sendRequest(request);
     }
 
-    public boolean putOnline(String nickName, CMRole role, final CloudMedia.SimpleActionListener listener) {
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date curDate = new Date(System.currentTimeMillis());
-            // String time = curDate.toString();
-            String strTime = formatter.format(curDate);
+    public void handleRequest(String method, P2PMqttRequestHandler handler) {
+        mExtMqttClient.installRequestHandler(method, handler);
+    }
 
+    public String whoisMC() {
+        return CMRole.ROLE_MC.str();
+    }
+
+    private String whoami() {
+        return mMyVendorID + "_" + mMyNode.getGroupID() + "_" + mMyNode.getID();
+    }
+
+    private String whoareyou(String groupID, String nodeID) {
+        return mMyVendorID + "_" + groupID + "_" + nodeID;
+    }
+
+    private boolean putOnline(final CloudMedia.SimpleActionListener listener) {
             String params = "";
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ID.str(), mMyID);
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.TIME.str(), strTime);
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.LOCATION.str(), "none");
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.NICK.str(), nickName);
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ROLE.str(), role.str());
-            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.STATUS.str(), "online");
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ID.str(), mMyNode.getID());
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.NICK.str(), mMyNode.getNick());
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ROLE.str(), mMyNode.getRole());
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.LOCATION.str(), mMyNode.getLocation());
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.STREAM_STATUS.str(), mMyNode.getStreamStatus());
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.VENDOR_ID.str(), mMyVendorID);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.VENDOR_NICK.str(), mMyVendorNick);
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.GROUP_ID.str(), mMyNode.getGroupID());
+            params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.GROUP_NICK.str(), mMyNode.getGroupNick());
+
             params = P2PMqtt.MyJsonString.addJsonBrace(params);
 
-            return sendRequest("controller", "online", params, listener);
+            return sendRequest(whoisMC(), RPCMethod.ONLINE, params, listener);
     }
 
-    public boolean putOffline(String nickName, CMRole role, final CloudMedia.SimpleActionListener listener) {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date curDate = new Date(System.currentTimeMillis());
-        // String time = curDate.toString();
-        String strTime = formatter.format(curDate);
+    private boolean putOffline(final CloudMedia.SimpleActionListener listener) {
+        return sendRequest(whoisMC(), RPCMethod.OFFLINE, null, listener);
+    }
 
+    private boolean updateCMField(CMField filed, String newValue, final SimpleActionListener listener) {
         String params = "";
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ID.str(), mMyID);
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.TIME.str(), strTime);
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.LOCATION.str(), "none");
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.NICK.str(), nickName);
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.ROLE.str(), role.str());
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CMField.STATUS.str(), "offline");
-        params = P2PMqtt.MyJsonString.addJsonBrace(params);
-
-        return sendRequest("controller", "offline", params, listener);
-    }
-
-    public boolean updateMyStatus(CMStatus status, final SimpleActionListener listener) {
-        updateCMField(CMField.STATUS.str(), status.toString().toLowerCase(), listener);
-        return true;
-    }
-
-    private boolean updateCMField(String filed, String newValue, final SimpleActionListener listener) {
-        String params = "";
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", mMyID);
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "field", filed);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "field", filed.str());
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "value", newValue);
         params = P2PMqtt.MyJsonString.addJsonBrace(params);
-        return sendRequest("controller", "nodes_update", params, listener);
+        return sendRequest(whoisMC(), RPCMethod.UPDATE_FIELD, params, listener);
     }
 
-    public boolean findNodeInfo(String nodeID, final CloudMedia.SimpleActionListener listener){
-        String params = "";
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "whoami", nodeID);
-        params = P2PMqtt.MyJsonString.addJsonBrace(params);
-        return findCMNodes(params, listener);
-    }
+    public final class Node {
+        private String mID;
+        private String mNick;
+        private String mRole;
+        private String mLocation;
+        private String mStreamStatus;
+        private String mGroupID;
+        private String mGroupNick;
 
-    public boolean findRolesOnline(CMRole role, final CloudMedia.SimpleActionListener listener){
-        String params = "";
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "role", role.str());
-        params = P2PMqtt.MyJsonString.addJsonBrace(params);
-        return findCMNodes(params, listener);
-    }
-
-    private boolean findCMNodes(String params, final CloudMedia.SimpleActionListener listener) {
-        return sendRequest("controller", "nodes_find", params, listener);
-    }
-
-    public boolean sendText(String mWhoareyou, String text) {
-        String topic = mWhoareyou + "/" + mMyID + "/text";
-        mExtMqttClient.MqttPublish(topic, text, 1, false);
-        return true;
-    }
-
-    public CloudMedia(Context context) {
-        mContext = context;
-    }
-
-    public boolean connect(final String nick, final CMRole role, final FullActionListener listener) {
-        mBrokerUrl = getBrokerUrlFromServer();
-        mMyID = getIDFromServer();
-        mExtMqttClient = new P2PMqtt(mContext, mMyID, "12345");
-
-        setNodesStatusChangeListener(mNodeStatusLisener);
-
-        mExtMqttClient.connect(mBrokerUrl, new P2PMqtt.IFullActionListener() {
-            @Override
-            public void onSuccess(String params) {
-
-                putOnline(nick, role, new SimpleActionListener() {
-                    @Override
-                    public boolean onResult(String result) {
-                        listener.onSuccess("OK");
-                        return true;
-                    }
-                });
-            }
-
-            @Override
-            public void onFailure(String params) {
-                listener.onFailure("ERROR");
-            }
-        });
-
-        return true;
-    }
-
-    public boolean disconnect() {
-        // to close all local media nodes ?
-
-        mExtMqttClient.disconnect();
-        return  true;
-    }
-
-    public RemoteMediaNode declareRemoteMediaNode(String whoareyou){
-        return RemoteMediaNode.create(this, whoareyou);
-    }
-
-    public LocalMediaNode declareLocalMediaNode() {
-        return new LocalMediaNode(this);
-    }
-
-    // not implemented yet.
-    // in our original design, LiveServer interface should exposed from MQTT media controller
-    // yet another way is tack to cloud live media server directly.
-    // further more, client may have no idea about his interface?
-    LiveServerNode declareLiveServer(){
-        return new LiveServerNode();
-    }
-
-    public interface SimpleActionListener {
-        boolean onResult(String result);
-    }
-
-    public interface FullActionListener {
-        public void onSuccess(String params);
-        public void onFailure(String params);
-    }
-
-    /**
-     * Interface definition for listener of nodes status changes
-     * such as online/offline
-     */
-    public interface OnNodesStatusChange{
-        boolean OnNodesStatusChange(NodesList nodesList);
-    }
-
-    public final class NodesList{
-        public final class Node{
-            private String mWhoami;
-            private String mNick;
-            private String mLocation;
-            private String mLastUpdateTime;
-            private String mStatus;
-
-            Node(JSONObject jnode){
-                try {
-                    mWhoami = jnode.getString("whoami");
-                    mNick = jnode.getString("nick");
-                    mLocation = jnode.getString("location");
-                    mLastUpdateTime = jnode.getString("time");
-                    mStatus = jnode.getString("status");
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            void log(){
-                Log.d(TAG, "whoami: " + mWhoami);
-                Log.d(TAG, "nick: " + mNick);
-                Log.d(TAG, "location: " + mLocation);
-                Log.d(TAG, "time: " + mLastUpdateTime);
-                Log.d(TAG, "status: " + mStatus);
-            }
-            public String getStatus(){
-                return mStatus;
-            }
-            public String getNick(){
-                return mNick;
-            }
-            public String getWhoami(){
-                return mWhoami;
+        Node(JSONObject jnode){
+            try {
+                mID= jnode.getString(CMField.ID.str());
+                mNick = jnode.getString(CMField.NICK.str());
+                mRole = jnode.getString(CMField.ROLE.str());
+                mLocation = jnode.getString(CMField.LOCATION.str());
+                mStreamStatus = jnode.getString(CMField.STREAM_STATUS.str());
+                mGroupID = jnode.getString(CMField.GROUP_ID.str());
+                mGroupNick = jnode.getString(CMField.GROUP_NICK.str());
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
         }
 
-        private List<Node> mNodesList = new ArrayList<Node>();
-        public List<String> mNodesID = new ArrayList<String>();
-        public List<String> mNodesNick = new ArrayList<String>();
-        public List<String> mNodesStatus = new ArrayList<String>();
+        Node(String id, String nick, CMRole role, String groupID, String groupNick) {
+            mID = id;
+            mNick = nick;
+            mRole = role.str();
+            mLocation = FIELD_UNKNOWN;
+            if (mRole.equals(CMRole.ROLE_PUSHER.str()))
+                mStreamStatus = CMStreamStatus.PUSHING_CLOSE.str();
+            else if (mRole.equals(CMRole.ROLE_PULLER.str()))
+                mStreamStatus = CMStreamStatus.PULLING_CLOSE.str();
+            else
+                mStreamStatus = CMStreamStatus.UNKNOWN.str();
+            mGroupID = groupID;
+            mGroupNick = groupNick;
+        }
+
+        void print(){
+            Log.d(TAG, "id: " + mID);
+            Log.d(TAG, "nick: " + mNick);
+            Log.d(TAG, "role: " + mRole);
+            Log.d(TAG, "location: " + mLocation);
+            Log.d(TAG, "stream_status: " + mStreamStatus);
+            Log.d(TAG, "group_id: " + mGroupID);
+            Log.d(TAG, "group_nick: " + mGroupNick);
+        }
+
+        public String getID(){
+            return mID;
+        }
+
+        public String getNick(){
+            return mNick;
+        }
+
+        public String getRole(){
+            return mRole;
+        }
+
+        public String getLocation(){
+            return mLocation;
+        }
+
+        public String getStreamStatus(){
+            return mStreamStatus;
+        }
+
+        public String getGroupID(){
+            return mGroupID;
+        }
+
+        public String getGroupNick(){
+            return mGroupNick;
+        }
+
+        public String setLocation(String location){
+            return mLocation = location;
+        }
+
+        public String setStreamStatus(CMStreamStatus status){
+            return mStreamStatus = status.str();
+        }
+
+        public String setGroupID(String id){
+            return mGroupID = id;
+        }
+
+        public String setGroupNick(String nick){
+            return mGroupNick = nick;
+        }
+
+    }
+
+
+    public final class NodesList {
+        private static final String CHANGE_ALL_ONLINE = "all_online";
+        private static final String CHANGE_NEW_ONLINE = "new_online";
+        private static final String CHANGE_NEW_OFFLINE = "new_offline";
+        private static final String CHANGE_NEW_UPDATE = "new_update";
+
+        private List<Node> mAllOnlineList = new ArrayList<Node>();
+        private List<Node> mNewOnlineList = new ArrayList<Node>();
+        private List<Node> mNewOfflineList = new ArrayList<Node>();
+        private List<Node> mNewUpdateList = new ArrayList<Node>();
 
         public NodesList(String jsonStr) {
             try {
-                JSONArray jsonNodes = new JSONArray(jsonStr);
-                for (int i = 0; i < jsonNodes.length(); i++) {
-                    JSONObject jnode = jsonNodes.getJSONObject(i);
-                    Node node = new Node(jnode);
-                    node.log();
-                    mNodesList.add(node);
-                    mNodesID.add(node.mWhoami);
-                    mNodesNick.add(node.mNick);
-                    mNodesStatus.add(node.mStatus);
+                JSONObject jsonObj = new JSONObject(jsonStr);
+                if (jsonObj.has(CHANGE_ALL_ONLINE)) {
+                    jsonArrayToList(jsonObj.getJSONArray(CHANGE_ALL_ONLINE), mAllOnlineList);
+                } else {
+                    if (jsonObj.has(CHANGE_NEW_ONLINE)) {
+                        jsonArrayToList(jsonObj.getJSONArray(CHANGE_NEW_ONLINE), mNewOnlineList);
+                    }
+                    if (jsonObj.has(CHANGE_NEW_OFFLINE)) {
+                        jsonArrayToList(jsonObj.getJSONArray(CHANGE_NEW_OFFLINE), mNewOfflineList);
+                    }
+                    if (jsonObj.has(CHANGE_NEW_UPDATE)) {
+                        jsonArrayToList(jsonObj.getJSONArray(CHANGE_NEW_UPDATE), mNewUpdateList);
+                    }
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
 
-        public int size() {
-            return mNodesList.size();
+        public List<Node> getAllOnlineList() {
+            return mAllOnlineList;
+        }
+
+        public List<Node> getNewOnlineList() {
+            return mNewOnlineList;
+        }
+
+        public List<Node> getNewOfflineList() {
+            return mNewOfflineList;
+        }
+
+        public List<Node> getNewUpdateList() {
+            return mNewUpdateList;
         }
 
         public void clear(){
-            mNodesID.clear();
-            mNodesNick.clear();
-            mNodesStatus.clear();
-
-            mNodesList.clear();
+            mAllOnlineList.clear();
+            mNewOnlineList.clear();
+            mNewOfflineList.clear();
+            mNewUpdateList.clear();
         }
 
-        public List<Node> get(){
-            return mNodesList;
-        }
-        public void log(){
-            for (Node e:mNodesList) {
-                e.log();
+        private void jsonArrayToList(JSONArray jarray, List<Node> nodeList) {
+            try {
+                for (int i = 0; i < jarray.length(); i++) {
+                    JSONObject jnode = jarray.getJSONObject(i);
+                    Node node = new Node(jnode);
+                    nodeList.add(node);
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
             }
         }
-    }
 
-    public void setNodesStatusChangeListener(final OnNodesStatusChange listener) {
-        if(listener == null){
-            return;
-        }
-
-        if(mExtMqttClient == null) {
-            mNodeStatusLisener = listener;
-        } else {
-            mExtMqttClient.installTopicHandler(TOPIC_PUSHER_ONLINE, new MqttTopicHandler() {
-                @Override
-                public void onMqttMessage(String jstr) {
-                    mNodeStatusLisener.OnNodesStatusChange(new NodesList(jstr));
-                }
-            });
-        }
     }
 
     public interface OnTextMessage{
         boolean OnTextMessage(String text);
     }
 
+    public boolean sendText(String groupID,String nodeID, String text) {
+        String topic = Topic.generate(whoareyou(groupID, nodeID),whoami(),Topic.Action.EXCHANGE_MSG);
+        mExtMqttClient.MqttPublish(topic, text, 1, false);
+        return true;
+    }
+
     public void setTextMessageListener(final OnTextMessage listener) {
-        mExtMqttClient.installTopicHandler(mMyID + "/+/text", new MqttTopicHandler() {
+        mExtMqttClient.installTopicHandler(Topic.generate(whoami(),"+",Topic.Action.EXCHANGE_MSG), new MqttTopicHandler() {
             @Override
             public void onMqttMessage(String text) {
                 listener.OnTextMessage(text);
@@ -448,7 +531,4 @@ public class CloudMedia {
         });
     }
 
-    public P2PMqtt getMqtt(){
-        return mExtMqttClient;
-    }
 }
