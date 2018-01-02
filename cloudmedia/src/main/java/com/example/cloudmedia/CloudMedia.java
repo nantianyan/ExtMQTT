@@ -50,20 +50,11 @@ public class CloudMedia {
     public static final String RPCSuccess = "OK";
     public static final String RPCFailure = "ERROR";
 
-    public enum CMStatus{
-        ONLINE("online"),
-        OFFLINE("offline"),
-        UNKNOWN(FIELD_UNKNOWN);
-
-        private final String mStr;
-        CMStatus(String str){
-            mStr = str;
-        }
-        public String str(){
-            return mStr;
-        }
-    }
-
+    /**
+     * Indicates the streaming status of a client node, the node must update this status
+     * to MCS(Media Control Server) when the status changes by calling 
+     * updateStreamStatus(CMStreamStatus status, final RPCResultListener listener)
+     */
     public enum CMStreamStatus{
         PUSHING("pushing"),
         PUSHING_CLOSE("pushing_close"),
@@ -80,6 +71,9 @@ public class CloudMedia {
         }
     }
 
+    /**
+     * Indicates the roles of the client nodes on a media transaction
+     */
     public enum CMRole{
         ROLE_ALL("all"),
         ROLE_PULLER("puller"),
@@ -97,6 +91,9 @@ public class CloudMedia {
         }
     }
 
+    /**
+     * Indicates the basic properties of a client node
+     */
     public enum CMField{
         ID("id"),
         NICK("nick"),
@@ -117,28 +114,32 @@ public class CloudMedia {
         }
     }
 
+    /**
+     * A CloudMedia object for all nodes used to reach cloud media transaction
+     */
     public CloudMedia(Context context) {
         mContext = context;
         mMyVendorID = FIELD_VENDORID_DEFAULT;
         mMyVendorNick = FIELD_VENDORNICK_DEFAULT;
     }
 
+    /**
+     * Indicates a remote client node as a proxy used to send all media requests to this node
+     */
     public RemoteMediaNode declareRemoteMediaNode(Node remoteNode){
         return RemoteMediaNode.create(this, whoareyou(remoteNode.getGroupID(), remoteNode.getID()));
     }
 
+    /**
+     * Indicates a local client node as an actor to respond all media requests from a remote node
+     */
     public LocalMediaNode declareLocalMediaNode() {
         return new LocalMediaNode(this);
     }
 
-    // not implemented yet.
-    // in our original design, LiveServer interface should exposed from MQTT media controller
-    // yet another way is tack to cloud live media server directly.
-    // further more, client may have no idea about his interface?
-    public LiveServerNode declareLiveServer(){
-        return new LiveServerNode();
-    }
-
+    /**
+     * A node calls it to connect to MCS before doing any media transaction
+     */
     public boolean connect(final String nick, final CMRole role, final RPCResultListener listener) {
         mBrokerUrl = getBrokerUrlFromServer();
         String myID = getIDFromServer();
@@ -176,39 +177,46 @@ public class CloudMedia {
         return true;
     }
 
+    /**
+     * A node calls it to disconnect from MCS when it doesn't do media transaction any more
+     */
     public boolean disconnect() {
         putOffline(null);
         mExtMqttClient.disconnect();
         return  true;
     }
 
+    /**
+     * A node calls it to notify a new stream status to MCS,
+     * this method must be called whenever the node's stream status change
+     */
     public boolean updateStreamStatus(CMStreamStatus status, final RPCResultListener listener) {
         return updateCMField(CMField.STREAM_STATUS, status.str(), listener);
     }
 
+    /**
+     * Register a listener to observe remote nodes list change, generally a PULL node must
+     * call it to be notified timely when PUSH nodes have some change
+     */
     public void setNodesListChangeListener(final OnNodesListChange listener) {
         mNodesListChangeLisener = listener;
     }
 
+    /**
+     * A common listener interface used to return a RPC result
+     */
     public interface RPCResultListener {
         public void onSuccess(String params);
         public void onFailure(String params);
     }
 
     /**
-     * Interface definition for listener of nodes status changes
-     * such as online/offline
+     * A listener interface used to return the changed nodes list
      */
     public interface OnNodesListChange{
         boolean OnNodesListChange(NodesList nodesList);
     }
 
-
-    /**
-     * get uniqure ID from server.
-     * NOTE: this function cannot be called from main thread!
-     * @return uniqure id managed by a cloud server
-     */
     static private String getIDFromServer(){
         if(false) {
             URL url = null;
@@ -346,6 +354,9 @@ public class CloudMedia {
         return sendRequest(whoisMC(), RPCMethod.UPDATE_FIELD, params, listener);
     }
 
+    /**
+     * A client node definition, for both the PUSH node and PULL node
+     */
     public final class Node {
         private String mID;
         private String mNick;
@@ -440,7 +451,12 @@ public class CloudMedia {
 
     }
 
-
+    /**
+     * A whole node list definition which contains changed nodes list
+     * of all online, new online, new offline and new update. A node can
+     * observe and sniff remote nodes change from NodeList if it registered
+     * a OnNodesListChange listener
+     */
     public final class NodesList {
         private static final String CHANGE_ALL_ONLINE = "all_online";
         private static final String CHANGE_NEW_ONLINE = "new_online";
