@@ -153,14 +153,18 @@ public class CloudMedia {
                     @Override
                     public void onSuccess(String params) {
                         listener.onSuccess(RPCSuccess);
-                        mExtMqttClient.installTopicHandler(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE),
-                            new MqttTopicHandler() {
-                                @Override
-                                public void onMqttMessage(String jstr) {
-                                    if (mNodesListChangeLisener != null)
-                                        mNodesListChangeLisener.OnNodesListChange(new NodesList(jstr));
-                                }
-                            });
+                        // PULLER must observe remote nodes change
+                        if (mMyNode.getRole().equals(CMRole.ROLE_PULLER)) {
+							MqttTopicHandler nodesChangeHandler = new MqttTopicHandler() {
+								@Override
+								public void onMqttMessage(String jstr) {
+									if (mNodesListChangeLisener != null)
+										mNodesListChangeLisener.OnNodesListChange(new NodesList(jstr));
+								}
+							};
+                            mExtMqttClient.installTopicHandler(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
+                            mExtMqttClient.installTopicHandler(Topic.generate(whoareyou(CMRole.ROLE_PULLER.str(),"*"), whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
+                        }
                     }
                     @Override
                     public void onFailure(String params) {listener.onFailure(RPCFailure);}
