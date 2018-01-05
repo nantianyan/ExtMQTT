@@ -267,7 +267,7 @@ public class CloudMedia {
 
             return null;
         } else {
-            return "CloudMedia_" + System.nanoTime();
+            return "N" + System.nanoTime();
         }
     }
 
