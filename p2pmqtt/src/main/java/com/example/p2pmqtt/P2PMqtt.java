@@ -314,7 +314,8 @@ public class P2PMqtt {
         public static String makeJrpcString(String method, String params, String id) {
             String dst = "";
             dst = makeKeyValueString(dst, "method", method);
-            dst = makeKeyValueString(dst, "params", params);
+            if (params != null)
+                dst = makeKeyValueString(dst, "params", params);
             dst = makeKeyValueString(dst, "id", id);
             return addJsonBrace(dst);
         }

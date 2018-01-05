@@ -149,22 +149,23 @@ public class CloudMedia {
         mExtMqttClient.connect(mBrokerUrl, new P2PMqtt.IFullActionListener() {
             @Override
             public void onSuccess(String params) {
+                // PULLER must observe remote nodes change
+                if (mMyNode.getRole().equals(CMRole.ROLE_PULLER.str())) {
+                    MqttTopicHandler nodesChangeHandler = new MqttTopicHandler() {
+                        @Override
+                        public void onMqttMessage(String jstr) {
+                            if (mNodesListChangeLisener != null)
+                                mNodesListChangeLisener.OnNodesListChange(new NodesList(jstr));
+                        }
+                    };
+                    mExtMqttClient.installTopicHandler(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
+                    mExtMqttClient.installTopicHandler(Topic.generate(whoareyou(CMRole.ROLE_PULLER.str(),"*"), whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
+                }
+
                 putOnline(new RPCResultListener() {
                     @Override
                     public void onSuccess(String params) {
                         listener.onSuccess(RPCSuccess);
-                        // PULLER must observe remote nodes change
-                        if (mMyNode.getRole().equals(CMRole.ROLE_PULLER)) {
-							MqttTopicHandler nodesChangeHandler = new MqttTopicHandler() {
-								@Override
-								public void onMqttMessage(String jstr) {
-									if (mNodesListChangeLisener != null)
-										mNodesListChangeLisener.OnNodesListChange(new NodesList(jstr));
-								}
-							};
-                            mExtMqttClient.installTopicHandler(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
-                            mExtMqttClient.installTopicHandler(Topic.generate(whoareyou(CMRole.ROLE_PULLER.str(),"*"), whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
-                        }
                     }
                     @Override
                     public void onFailure(String params) {listener.onFailure(RPCFailure);}
