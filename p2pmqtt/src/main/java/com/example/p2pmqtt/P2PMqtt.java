@@ -221,6 +221,11 @@ public class P2PMqtt {
     }
 
     public void installTopicHandler(String topic, MqttTopicHandler handler) {
+        if (mTopicHandler.containsKey(topic)) {
+            Log.w(TAG, "repeated topic handler install");
+            return;
+        }
+
         Log.i(TAG, "install topic handler for:" + topic);
         mTopicHandler.put(topic, handler);
         if(mIsConnected) {
@@ -264,7 +269,7 @@ public class P2PMqtt {
                 e.printStackTrace();
             }
         } else if (mTopicHandler.containsKey(topic)) {
-            mTopicHandler.get(topic).onMqttMessage(message.toString());
+            mTopicHandler.get(topic).onMqttMessage(topic, message.toString());
         }
     }
 

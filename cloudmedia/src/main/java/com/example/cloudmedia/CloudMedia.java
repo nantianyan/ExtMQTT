@@ -153,9 +153,9 @@ public class CloudMedia {
                 if (mMyNode.getRole().equals(CMRole.ROLE_PULLER.str())) {
                     MqttTopicHandler nodesChangeHandler = new MqttTopicHandler() {
                         @Override
-                        public void onMqttMessage(String jstr) {
+                        public void onMqttMessage(String topic, String jstr) {
                             if (mNodesListChangeLisener != null)
-                                mNodesListChangeLisener.OnNodesListChange(new NodesList(jstr));
+                                mNodesListChangeLisener.onNodesListChange(new NodesList(jstr));
                         }
                     };
                     mExtMqttClient.installTopicHandler(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
@@ -219,7 +219,48 @@ public class CloudMedia {
      * A listener interface used to return the changed nodes list
      */
     public interface OnNodesListChange{
-        boolean OnNodesListChange(NodesList nodesList);
+        boolean onNodesListChange(NodesList nodesList);
+    }
+
+    /**
+     * A node calls it to exchange data with a peer node,
+     * the application can define the data format within the message,
+     * the parameter groupID and nodeID show where the message is sent to
+     */
+    public boolean sendMessage(String groupID,String nodeID, String message) {
+        Log.d(TAG, "sendMessage: groupID=" + groupID + ",nodeID=" + nodeID + ",message=" + message);
+        String topic = Topic.generate(whoareyou(groupID, nodeID),whoami(),Topic.Action.EXCHANGE_MSG);
+        mExtMqttClient.MqttPublish(topic, message, 2, false);
+        return true;
+    }
+
+    /**
+     * A listener interface used to receive data from a peer node,
+     * the parameter groupID and nodeID show where the message comes from
+     */
+    public interface OnMessageListener {
+        boolean onMessage(String groupID, String nodeID, String message);
+    }
+
+    /**
+     * Set a message listener used to receive data from a peer node
+     */
+    public void setMessageListener(final OnMessageListener listener) {
+        mExtMqttClient.installTopicHandler(Topic.generate(whoami(),"+",Topic.Action.EXCHANGE_MSG), new MqttTopicHandler() {
+            @Override
+            public void onMqttMessage(String topic, String message) {
+                String fromWho = Topic.getFromWho(topic);
+                String[] arrays = fromWho.split("_");
+                String groupID = null;
+                String nodeID = null;
+                if (arrays.length == 3) {
+                    groupID = arrays[1];
+                    nodeID = arrays[2];
+                }
+                Log.d(TAG, "onMessage: groupID=" + groupID + ",nodeID=" + nodeID + ",message=" + message);
+                listener.onMessage(groupID, nodeID, message);
+            }
+        });
     }
 
     static private String getIDFromServer(){
@@ -529,25 +570,6 @@ public class CloudMedia {
             }
         }
 
-    }
-
-    public interface OnTextMessage{
-        boolean OnTextMessage(String text);
-    }
-
-    public boolean sendText(String groupID,String nodeID, String text) {
-        String topic = Topic.generate(whoareyou(groupID, nodeID),whoami(),Topic.Action.EXCHANGE_MSG);
-        mExtMqttClient.MqttPublish(topic, text, 1, false);
-        return true;
-    }
-
-    public void setTextMessageListener(final OnTextMessage listener) {
-        mExtMqttClient.installTopicHandler(Topic.generate(whoami(),"+",Topic.Action.EXCHANGE_MSG), new MqttTopicHandler() {
-            @Override
-            public void onMqttMessage(String text) {
-                listener.OnTextMessage(text);
-            }
-        });
     }
 
 }

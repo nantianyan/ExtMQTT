@@ -42,7 +42,7 @@ public class RemoteMediaNode{
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "target-id", mWhoareyou);
         params = P2PMqtt.MyJsonString.addJsonBrace(params);
 
-        return mCloudMedia.sendRequest(mCloudMedia.whoisMC(), RPCMethod.STOP_PUSH_MEDIA, null, listener);
+        return mCloudMedia.sendRequest(mCloudMedia.whoisMC(), RPCMethod.STOP_PUSH_MEDIA, params, listener);
     }
 
 }

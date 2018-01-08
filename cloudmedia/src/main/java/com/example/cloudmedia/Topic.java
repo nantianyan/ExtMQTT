@@ -13,5 +13,29 @@ public class Topic {
         return toWho + "/" + fromWho + "/" + action;
     }
 
+    public static String getToWho(String topic) {
+        String[] arrays = topic.split("/");
+        if (arrays.length != 3)
+            return null;
+
+        return arrays[0];
+    }
+
+    public static String getFromWho(String topic) {
+        String[] arrays = topic.split("/");
+        if (arrays.length != 3)
+            return null;
+
+        return arrays[1];
+    }
+
+    public static String getAction(String topic) {
+        String[] arrays = topic.split("/");
+        if (arrays.length != 3)
+            return null;
+
+        return arrays[2];
+    }
+
 }
 

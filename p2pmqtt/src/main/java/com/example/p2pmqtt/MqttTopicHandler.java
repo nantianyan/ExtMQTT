@@ -8,5 +8,5 @@ import org.json.JSONObject;
  */
 
 public abstract class MqttTopicHandler {
-    public abstract void onMqttMessage(String jstr);
+    public abstract void onMqttMessage(String topic, String jstr);
 }
