@@ -127,7 +127,7 @@ public class CloudMedia {
      * Indicates a remote client node as a proxy used to send all media requests to this node
      */
     public RemoteMediaNode declareRemoteMediaNode(Node remoteNode){
-        return RemoteMediaNode.create(this, whoareyou(remoteNode.getGroupID(), remoteNode.getID()));
+        return RemoteMediaNode.create(this, remoteNode);
     }
 
     /**
@@ -219,7 +219,7 @@ public class CloudMedia {
      * A listener interface used to return the changed nodes list
      */
     public interface OnNodesListChange{
-        boolean onNodesListChange(NodesList nodesList);
+        void onNodesListChange(NodesList nodesList);
     }
 
     /**
@@ -227,9 +227,9 @@ public class CloudMedia {
      * the application can define the data format within the message,
      * the parameter groupID and nodeID show where the message is sent to
      */
-    public boolean sendMessage(String groupID,String nodeID, String message) {
-        Log.d(TAG, "sendMessage: groupID=" + groupID + ",nodeID=" + nodeID + ",message=" + message);
-        String topic = Topic.generate(whoareyou(groupID, nodeID),whoami(),Topic.Action.EXCHANGE_MSG);
+    public boolean sendMessage(String peerGroupID,String peerNodeID, String message) {
+        Log.d(TAG, "sendMessage: groupID=" + peerGroupID + ",nodeID=" + peerNodeID + ",message=" + message);
+        String topic = Topic.generate(whoareyou(peerGroupID, peerNodeID),whoami(),Topic.Action.EXCHANGE_MSG);
         mExtMqttClient.MqttPublish(topic, message, 2, false);
         return true;
     }
@@ -239,7 +239,7 @@ public class CloudMedia {
      * the parameter groupID and nodeID show where the message comes from
      */
     public interface OnMessageListener {
-        boolean onMessage(String groupID, String nodeID, String message);
+        void onMessage(String peerGroupID, String peerNodeID, String message);
     }
 
     /**
@@ -314,6 +314,14 @@ public class CloudMedia {
 
     static private String getBrokerUrlFromServer(){
         return "tcp://139.224.128.15:1883";
+    }
+
+    public P2PMqtt getClient() {
+        return mExtMqttClient;
+    }
+
+    public String getVendorID() {
+        return mMyVendorID;
     }
 
     public boolean sendRequest(String whoareyou, String method,

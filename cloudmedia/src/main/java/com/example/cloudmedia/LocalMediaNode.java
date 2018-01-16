@@ -73,7 +73,7 @@ public class LocalMediaNode{
 
     /**
      * Interface definition for actor to be invoked when received
-     * startPushMedia MQTT request
+     * startPushMedia RPC request
      */
     public interface OnStartPushMedia
     {
@@ -88,7 +88,7 @@ public class LocalMediaNode{
 
     /**
      * Interface definition for actor to be invoked when received
-     * stopPushMedia MQTT request
+     * stopPushMedia RPC request
      */
     public interface OnStopPushMedia
     {

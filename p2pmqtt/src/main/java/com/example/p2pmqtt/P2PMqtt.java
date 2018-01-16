@@ -162,6 +162,7 @@ public class P2PMqtt {
         } catch (MqttException e) {
             e.printStackTrace();
         }
+        mIsConnected = false;
 
         return true;
     }
@@ -233,6 +234,19 @@ public class P2PMqtt {
         } // else the topic is subscribed when connect success.
     }
 
+    public void uninstallTopicHandler(String topic) {
+        if (!mTopicHandler.containsKey(topic)) {
+            Log.w(TAG, "handler has not installed for:" + topic);
+            return;
+        }
+
+        Log.i(TAG, "uninstall topic handler for:" + topic);
+        mTopicHandler.remove(topic);
+        if(mIsConnected) {
+            MqttUnsubscribe(topic);
+        }
+    }
+
     private void onMqttMessage(String topic, MqttMessage message) {
         if(topic.contains("/request")){
             // TODO: validate the json object
@@ -297,6 +311,16 @@ public class P2PMqtt {
         Log.d(TAG, "\t qos:" + qos);
         try {
             mClient.subscribe(topic, qos);
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void MqttUnsubscribe(String topic) {
+        Log.d(TAG, "<= MqttUnsubscribe:");
+        Log.d(TAG, "\t topic:" + topic);
+        try {
+            mClient.unsubscribe(topic);
         } catch (MqttException e) {
             e.printStackTrace();
         }

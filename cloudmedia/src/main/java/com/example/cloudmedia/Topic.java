@@ -2,9 +2,35 @@ package com.example.cloudmedia;
 
 public class Topic {
     public class Action {
+        /**
+         * RPC request
+         * Payload: <Json RPC>
+         */
         public static final String REQUEST = "request";
+
+        /**
+         * RPC reply
+         * Payload: <Json RPC>
+         */
         public static final String REPLY = "reply";
+
+        /**
+         * nodes change notify
+         * Payload: {"all_online":<Json Array>,"new_online":<Json Array>,"new_offline":<Json Array>,"new_update":<Json Array>}
+         */
         public static final String NODES_CHANGE = "nodes_change";
+
+        /**
+         * streaming exception notify
+         * Payload: {"stream_exception":<Stream Exception>}, <Stream Exception> may be "time_expired","pusher_error","network_error"
+         * or "unknown_error"
+         */
+        public static final String STREAM_EXCEPTION = "stream_exception";
+
+        /**
+         * exchange data between two nodes for user extended
+         * Payload: user self-defined format
+         */
         public static final String EXCHANGE_MSG = "exchange_msg";
 
     }
