@@ -82,7 +82,7 @@ public class P2PMqtt {
 
     private HashMap<String, P2PMqttRequestHandler> mRequestHandler = new HashMap<>();
     private HashMap<String, IMqttRpcActionListener> mActionListener = new HashMap<>();
-    private HashMap<String, MqttTopicHandler> mTopicHandler = new HashMap<>();
+    private MqttTopicHandler mTopicHandler;
 
     private String mWhoami;
     private String mWhoamiPwd;
@@ -133,10 +133,6 @@ public class P2PMqtt {
 
                         topic = mWhoami + "/+/reply";
                         MqttSubscribe(topic, 2);
-
-                        for(String key: mTopicHandler.keySet()) {
-                            MqttSubscribe(key, 2);
-                        }
 
                         onlineCallback.onSuccess(null);
                     }
@@ -221,30 +217,8 @@ public class P2PMqtt {
         mRequestHandler.put(method, handler);
     }
 
-    public void installTopicHandler(String topic, MqttTopicHandler handler) {
-        if (mTopicHandler.containsKey(topic)) {
-            Log.w(TAG, "repeated topic handler install");
-            return;
-        }
-
-        Log.i(TAG, "install topic handler for:" + topic);
-        mTopicHandler.put(topic, handler);
-        if(mIsConnected) {
-            MqttSubscribe(topic, 2);
-        } // else the topic is subscribed when connect success.
-    }
-
-    public void uninstallTopicHandler(String topic) {
-        if (!mTopicHandler.containsKey(topic)) {
-            Log.w(TAG, "handler has not installed for:" + topic);
-            return;
-        }
-
-        Log.i(TAG, "uninstall topic handler for:" + topic);
-        mTopicHandler.remove(topic);
-        if(mIsConnected) {
-            MqttUnsubscribe(topic);
-        }
+    public void installTopicHandler(MqttTopicHandler handler) {
+        mTopicHandler = handler;
     }
 
     private void onMqttMessage(String topic, MqttMessage message) {
@@ -282,8 +256,8 @@ public class P2PMqtt {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } else if (mTopicHandler.containsKey(topic)) {
-            mTopicHandler.get(topic).onMqttMessage(topic, message.toString());
+        } else if (mTopicHandler != null) {
+            mTopicHandler.onMqttMessage(topic, message.toString());
         }
     }
 

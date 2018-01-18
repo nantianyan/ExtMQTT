@@ -58,7 +58,7 @@ public class Topic {
     public static String getAction(String topic) {
         String[] arrays = topic.split("/");
         if (arrays.length != 3)
-            return null;
+            return topic;
 
         return arrays[2];
     }

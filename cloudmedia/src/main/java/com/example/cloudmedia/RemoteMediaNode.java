@@ -120,9 +120,9 @@ public class RemoteMediaNode{
                 }
             };
 
-            mCloudMedia.getClient().installTopicHandler(exctopic, streamExceptionHandler);
+            mCloudMedia.getTopicHandler().install(exctopic, streamExceptionHandler);
         } else if (mStreamExceptionListener != null) {
-            mCloudMedia.getClient().uninstallTopicHandler(exctopic);
+            mCloudMedia.getTopicHandler().uninstall(exctopic);
         }
 
         mStreamExceptionListener = listener;

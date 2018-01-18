@@ -40,6 +40,7 @@ public class CloudMedia {
 
     private Context mContext;
     private P2PMqtt mExtMqttClient;
+    private TopicHandler mTopicHandler;
     private String mBrokerUrl;
     private Node mMyNode;
     private String mMyVendorID;
@@ -145,6 +146,8 @@ public class CloudMedia {
         String myID = getIDFromServer();
         mMyNode = new Node(myID, nick, role, FIELD_GROUPID_DEFAULT, FIELD_GROUPNICK_DEFAULT);
         mExtMqttClient = new P2PMqtt(mContext, whoami(), "12345");
+        mTopicHandler = new TopicHandler(mExtMqttClient);
+        mExtMqttClient.installTopicHandler(mTopicHandler);
 
         mExtMqttClient.connect(mBrokerUrl, new P2PMqtt.IFullActionListener() {
             @Override
@@ -158,8 +161,8 @@ public class CloudMedia {
                                 mNodesListChangeLisener.onNodesListChange(new NodesList(jstr));
                         }
                     };
-                    mExtMqttClient.installTopicHandler(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
-                    mExtMqttClient.installTopicHandler(Topic.generate(whoareyou(CMRole.ROLE_PULLER.str(),"*"), whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
+                    mTopicHandler.install(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
+                    mTopicHandler.install(Topic.generate(whoareyou(CMRole.ROLE_PULLER.str(),"*"), whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
                 }
 
                 putOnline(new RPCResultListener() {
@@ -246,7 +249,7 @@ public class CloudMedia {
      * Set a message listener used to receive data from a peer node
      */
     public void setMessageListener(final OnMessageListener listener) {
-        mExtMqttClient.installTopicHandler(Topic.generate(whoami(),"+",Topic.Action.EXCHANGE_MSG), new MqttTopicHandler() {
+        mTopicHandler.install(Topic.generate(whoami(),"+",Topic.Action.EXCHANGE_MSG), new MqttTopicHandler() {
             @Override
             public void onMqttMessage(String topic, String message) {
                 String fromWho = Topic.getFromWho(topic);
@@ -316,8 +319,8 @@ public class CloudMedia {
         return "tcp://139.224.128.15:1883";
     }
 
-    public P2PMqtt getClient() {
-        return mExtMqttClient;
+    public TopicHandler getTopicHandler() {
+        return mTopicHandler;
     }
 
     public String getVendorID() {
