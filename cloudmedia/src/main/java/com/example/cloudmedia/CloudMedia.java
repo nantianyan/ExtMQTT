@@ -33,15 +33,16 @@ import java.util.List;
 public class CloudMedia {
     private static final String TAG = "CloudMedia";
     private static final String FIELD_UNKNOWN = "unknown";
-    private static final String FIELD_GROUPID_DEFAULT = "00000000";
+    private static final String FIELD_GROUPID_DEFAULT = "G00000000";
     private static final String FIELD_GROUPNICK_DEFAULT = "Default Group";
-    private static final String FIELD_VENDORID_DEFAULT = "00000000";
+    private static final String FIELD_VENDORID_DEFAULT = "V00000000";
     private static final String FIELD_VENDORNICK_DEFAULT = "CM Team";
 
     private Context mContext;
     private P2PMqtt mExtMqttClient;
     private TopicHandler mTopicHandler;
     private String mBrokerUrl;
+    private String mMyID;
     private Node mMyNode;
     private String mMyVendorID;
     private String mMyVendorNick;
@@ -122,6 +123,8 @@ public class CloudMedia {
         mContext = context;
         mMyVendorID = FIELD_VENDORID_DEFAULT;
         mMyVendorNick = FIELD_VENDORNICK_DEFAULT;
+        mBrokerUrl = getBrokerUrlFromServer();
+        mMyID = getIDFromServer();
     }
 
     /**
@@ -142,9 +145,7 @@ public class CloudMedia {
      * A node calls it to connect to MCS before doing any media transaction
      */
     public boolean connect(final String nick, final CMRole role, final RPCResultListener listener) {
-        mBrokerUrl = getBrokerUrlFromServer();
-        String myID = getIDFromServer();
-        mMyNode = new Node(myID, nick, role, FIELD_GROUPID_DEFAULT, FIELD_GROUPNICK_DEFAULT);
+        mMyNode = new Node(mMyID, nick, role, FIELD_GROUPID_DEFAULT, FIELD_GROUPNICK_DEFAULT);
         mExtMqttClient = new P2PMqtt(mContext, whoami(), "12345");
         mTopicHandler = new TopicHandler(mExtMqttClient);
         mExtMqttClient.installTopicHandler(mTopicHandler);
