@@ -60,8 +60,10 @@ public class CloudMedia {
     public enum CMStreamStatus{
         PUSHING("pushing"),
         PUSHING_CLOSE("pushing_close"),
+        PUSHING_ERROR("pushing_error"),
         PULLING("pulling"),
         PULLING_CLOSE("pulling_close"),
+        PULLING_ERROR("pulling_error"),
         UNKNOWN(FIELD_UNKNOWN);
 
         private final String mStr;
