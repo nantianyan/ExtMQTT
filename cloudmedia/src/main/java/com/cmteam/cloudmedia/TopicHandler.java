@@ -1,11 +1,11 @@
-package com.example.cloudmedia;
+package com.cmteam.cloudmedia;
 
 import java.util.HashMap;
 
 import android.util.Log;
 
-import com.example.p2pmqtt.MqttTopicHandler;
-import com.example.p2pmqtt.P2PMqtt;
+import com.cmteam.p2pmqtt.MqttTopicHandler;
+import com.cmteam.p2pmqtt.P2PMqtt;
 
 public class TopicHandler extends MqttTopicHandler {
     private static final String TAG = "TopicHandler";

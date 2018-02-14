@@ -1,4 +1,4 @@
-package com.example.p2pmqtt;
+package com.cmteam.p2pmqtt;
 
 import android.content.Context;
 import android.util.Log;
@@ -145,7 +145,7 @@ public class P2PMqtt {
                 });
             } catch (MqttException e) {
                 e.printStackTrace();
-                // return false ??
+                return false;
             }
         }
 
@@ -159,6 +159,8 @@ public class P2PMqtt {
             e.printStackTrace();
         }
         mIsConnected = false;
+        mRequestHandler.clear();
+        mActionListener.clear();
 
         return true;
     }

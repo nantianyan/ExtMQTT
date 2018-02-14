@@ -5,8 +5,8 @@ md mytmp\p2p
 cd mytmp
 jar -xvf cm/classes.jar
 jar -xvf p2p/classes.jar
-jar -cvf cmmq.jar com
-move cmmq.jar ..
+jar -cvf cmsdk.jar com
+move cmsdk.jar ..
 cd ..
 rd /s /q mytmp
 

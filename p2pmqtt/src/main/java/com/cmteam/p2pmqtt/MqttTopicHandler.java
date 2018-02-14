@@ -1,4 +1,4 @@
-package com.example.p2pmqtt;
+package com.cmteam.p2pmqtt;
 
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;

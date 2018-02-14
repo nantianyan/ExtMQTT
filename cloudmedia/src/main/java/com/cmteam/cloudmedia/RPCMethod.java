@@ -1,4 +1,4 @@
-package com.example.cloudmedia;
+package com.cmteam.cloudmedia;
 
 public class RPCMethod {
     /**
