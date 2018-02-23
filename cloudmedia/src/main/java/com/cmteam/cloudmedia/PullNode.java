@@ -6,12 +6,16 @@ import android.util.Log;
 import com.cmteam.p2pmqtt.P2PMqtt;
 import com.cmteam.p2pmqtt.MqttTopicHandler;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * PullNode: represents a stream puller(PULL node), which can get stream media from a stream pusher
  */
 public class PullNode extends MediaNode {
     private static final String TAG = "PullNode";
     private OnNodesListChange mNodesListChangeLisener;
+    private OnStreamException mStreamExceptionListener;
  
     public PullNode(Context context, String id, String nick, String deviceName) {
 	    mContext = context;
@@ -85,6 +89,73 @@ public class PullNode extends MediaNode {
         mTopicHandler.uninstall(Topic.generate(whoareyou(CloudMedia.CMRole.ROLE_PULLER.str(),"*"), whoisMC(),Topic.Action.NODES_CHANGE));
         mExtMqttClient.disconnect();
         return  true;
+    }
+
+    /**
+     * A PULLER calls it to request remote node to push stream
+     */
+    public boolean startPushMedia(Node pushNode, final CloudMedia.RPCResultListener listener){
+        String params = "";
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "target-id", whoareyou(pushNode));
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "expire-time", "100s");
+        params = P2PMqtt.MyJsonString.addJsonBrace(params);
+
+        return sendRequest(whoisMC(), RPCMethod.START_PUSH_MEDIA, params, listener);
+    }
+
+    /**
+     * A PULLER calls it to request remote node to stop pushing stream
+     */
+    public boolean stopPushMedia(Node pushNode, final CloudMedia.RPCResultListener listener){
+        String params = "";
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "target-id", whoareyou(pushNode));
+        params = P2PMqtt.MyJsonString.addJsonBrace(params);
+
+        return sendRequest(whoisMC(), RPCMethod.STOP_PUSH_MEDIA, params, listener);
+    }
+
+    /**
+     * A listener interface used to observe stream exception event from a PUSH node,
+     * a PULL node must register this listener after it calls RemoteMediaNode.startPushMedia
+     * with successful RPC result
+     */
+    public interface OnStreamException{
+        void onStreamException(String whoareyou, CloudMedia.CMStreamException exception);
+    }
+
+    /**
+     * A PULLER calls it to register a listener to observe exception during streaming
+     */
+    public void setStreamExceptionListener(Node pushNode, OnStreamException listener) {
+        String exctopic = Topic.generate("*", whoareyou(pushNode), Topic.Action.STREAM_EXCEPTION);
+        if (listener != null) {
+            MqttTopicHandler streamExceptionHandler = new MqttTopicHandler() {
+                @Override
+                public void onMqttMessage(String topic, String jstr) {
+                    String str;
+                    try {
+                        JSONObject jsonObj = new JSONObject(jstr);
+                        str = jsonObj.getString("stream_exception");
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        str = CloudMedia.CMStreamException.UNKNOWN_ERROR.str();
+                    }
+                    if (str == null)
+                        str = CloudMedia.CMStreamException.UNKNOWN_ERROR.str();
+                    CloudMedia.CMStreamException se = CloudMedia.CMStreamException.name(str);
+
+                    if (mStreamExceptionListener != null) {
+                        mStreamExceptionListener.onStreamException(Topic.getFromWho(topic), se);
+                    }
+                }
+            };
+
+            mTopicHandler.install(exctopic, streamExceptionHandler);
+        } else if (mStreamExceptionListener != null) {
+            mTopicHandler.uninstall(exctopic);
+        }
+
+        mStreamExceptionListener = listener;
     }
 
     /**

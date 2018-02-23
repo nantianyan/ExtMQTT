@@ -166,6 +166,10 @@ public abstract class MediaNode {
         return mVendorID + "_" + groupID + "_" + nodeID;
     }
 
+    protected String whoareyou(Node node) {
+        return mVendorID + "_" + node.getGroupID() + "_" + node.getID();
+    }
+
     protected boolean updateCMField(CloudMedia.CMField filed, String newValue, final CloudMedia.RPCResultListener listener) {
         String params = "";
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "field", filed.str());

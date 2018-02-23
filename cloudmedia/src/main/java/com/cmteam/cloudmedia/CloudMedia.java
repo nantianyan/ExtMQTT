@@ -177,13 +177,6 @@ public class CloudMedia {
         return new PullNode(context, nid, nodeNick, deviceName);
     }
 
-    /**
-     * Generate a proxy to a remote node,  used for a local node to send requests to the remote node
-     */
-    public static NodeProxy declareNodeProxy(Node remoteNode){
-        return new NodeProxy(remoteNode);
-    }
-
     private static String getIDFromServer(){
         if(false) {
             URL url = null;
