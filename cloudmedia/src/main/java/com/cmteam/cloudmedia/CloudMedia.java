@@ -18,7 +18,7 @@ import java.util.Date;
 
 public class CloudMedia {
     private static final String TAG = "CloudMedia";
-	private static final String FIELD_UNKNOWN = "unknown";
+    private static final String FIELD_UNKNOWN = "unknown";
 
     private static CloudMedia sCMInstance;
 
@@ -26,9 +26,9 @@ public class CloudMedia {
 
     }
 
-	/**
-	 * Get the single CloudMedia instance for all nodes used to reach cloud media transaction
-	 */
+    /**
+     * Get the single CloudMedia instance for all nodes used to reach cloud media transaction
+     */
     public static CloudMedia get() {
         if (sCMInstance == null) {
             sCMInstance = new CloudMedia();

@@ -36,8 +36,8 @@ public class PushNode extends MediaNode {
 
         mNode.setGroupID(groupID==null ? FIELD_GROUPID_DEFAULT : groupID);
         mNode.setGroupNick(groupNick==null ? FIELD_GROUPNICK_DEFAULT : groupNick);
-        mVendorID = vendorID;
-        mVendorNick = vendorNick;
+        mNode.setVendorID(vendorID);
+        mNode.setVendorNick(vendorNick);
         mExtMqttClient = new P2PMqtt(mContext, whoami(), "12345");
         mTopicHandler = new TopicHandler(mExtMqttClient);
         mExtMqttClient.installTopicHandler(mTopicHandler);

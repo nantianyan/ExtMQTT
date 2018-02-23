@@ -35,8 +35,8 @@ public class PullNode extends MediaNode {
 
         mNode.setGroupID(groupID==null ? FIELD_GROUPID_DEFAULT : groupID);
         mNode.setGroupNick(groupNick==null ? FIELD_GROUPNICK_DEFAULT : groupNick);
-        mVendorID = vendorID;
-        mVendorNick = vendorNick;
+        mNode.setVendorID(vendorID);
+        mNode.setVendorNick(vendorNick);
         mExtMqttClient = new P2PMqtt(mContext, whoami(), "12345");
         mTopicHandler = new TopicHandler(mExtMqttClient);
         mExtMqttClient.installTopicHandler(mTopicHandler);
@@ -96,7 +96,7 @@ public class PullNode extends MediaNode {
      */
     public boolean startPushMedia(Node pushNode, final CloudMedia.RPCResultListener listener){
         String params = "";
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "target-id", whoareyou(pushNode));
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "target-id", pushNode.whoami());
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, "expire-time", "100s");
         params = P2PMqtt.MyJsonString.addJsonBrace(params);
 
@@ -108,7 +108,7 @@ public class PullNode extends MediaNode {
      */
     public boolean stopPushMedia(Node pushNode, final CloudMedia.RPCResultListener listener){
         String params = "";
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "target-id", whoareyou(pushNode));
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, "target-id", pushNode.whoami());
         params = P2PMqtt.MyJsonString.addJsonBrace(params);
 
         return sendRequest(whoisMC(), RPCMethod.STOP_PUSH_MEDIA, params, listener);
@@ -127,7 +127,7 @@ public class PullNode extends MediaNode {
      * A PULLER calls it to register a listener to observe exception during streaming
      */
     public void setStreamExceptionListener(Node pushNode, OnStreamException listener) {
-        String exctopic = Topic.generate("*", whoareyou(pushNode), Topic.Action.STREAM_EXCEPTION);
+        String exctopic = Topic.generate("*", pushNode.whoami(), Topic.Action.STREAM_EXCEPTION);
         if (listener != null) {
             MqttTopicHandler streamExceptionHandler = new MqttTopicHandler() {
                 @Override

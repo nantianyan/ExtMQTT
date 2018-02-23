@@ -29,8 +29,6 @@ public abstract class MediaNode {
     protected P2PMqtt mExtMqttClient;
     protected TopicHandler mTopicHandler;
     protected Node mNode;
-    protected String mVendorID;
-    protected String mVendorNick;
 
     /**
      * A node calls it to connect to MCS before doing any media transaction
@@ -138,8 +136,8 @@ public abstract class MediaNode {
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, CloudMedia.CMField.DEVICE_NAME.str(), mNode.getDeviceName());
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, CloudMedia.CMField.LOCATION.str(), mNode.getLocation());
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, CloudMedia.CMField.STREAM_STATUS.str(), mNode.getStreamStatus());
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CloudMedia.CMField.VENDOR_ID.str(), mVendorID);
-        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CloudMedia.CMField.VENDOR_NICK.str(), mVendorNick);
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CloudMedia.CMField.VENDOR_ID.str(), mNode.getVendorID());
+        params = P2PMqtt.MyJsonString.makeKeyValueString(params, CloudMedia.CMField.VENDOR_NICK.str(), mNode.getVendorNick());
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, CloudMedia.CMField.GROUP_ID.str(), mNode.getGroupID());
         params = P2PMqtt.MyJsonString.makeKeyValueString(params, CloudMedia.CMField.GROUP_NICK.str(), mNode.getGroupNick());
 
@@ -159,15 +157,11 @@ public abstract class MediaNode {
     protected String whoami() {
         if (mNode == null)
             return INVALID_NODE;
-        return mVendorID + "_" + mNode.getGroupID() + "_" + mNode.getID();
+        return mNode.whoami();
     }
 
     protected String whoareyou(String groupID, String nodeID) {
-        return mVendorID + "_" + groupID + "_" + nodeID;
-    }
-
-    protected String whoareyou(Node node) {
-        return mVendorID + "_" + node.getGroupID() + "_" + node.getID();
+        return mNode.getVendorID() + "_" + groupID + "_" + nodeID;
     }
 
     protected boolean updateCMField(CloudMedia.CMField filed, String newValue, final CloudMedia.RPCResultListener listener) {
