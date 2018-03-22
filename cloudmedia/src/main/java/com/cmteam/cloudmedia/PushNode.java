@@ -30,14 +30,16 @@ public class PushNode extends MediaNode {
     }
 
     @Override
-    public boolean connect(final String user, final String passwd, final String groupID, final String groupNick,
-                              final String vendorID, final String vendorNick, final CloudMedia.RPCResultListener listener) {
-        // add login later
+    public boolean connect(final CloudMedia.CMUser user, final CloudMedia.RPCResultListener listener) {
+        if (!CloudMedia.CMRole.ROLE_PUSHER.str().equals(user.role)) {
+            Log.e(TAG, "account role not match");
+            return false;
+        }
+        mNode.setGroupID(user.groupID);
+        mNode.setGroupNick(user.groupNick);
+        mNode.setVendorID(user.vendorID);
+        mNode.setVendorNick(user.vendorNick);
 
-        mNode.setGroupID(groupID==null ? FIELD_GROUPID_DEFAULT : groupID);
-        mNode.setGroupNick(groupNick==null ? FIELD_GROUPNICK_DEFAULT : groupNick);
-        mNode.setVendorID(vendorID);
-        mNode.setVendorNick(vendorNick);
         mExtMqttClient = new P2PMqtt(mContext, whoami(), "12345");
         mTopicHandler = new TopicHandler(mExtMqttClient);
         mExtMqttClient.installTopicHandler(mTopicHandler);

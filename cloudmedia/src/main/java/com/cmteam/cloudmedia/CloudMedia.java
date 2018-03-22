@@ -21,9 +21,10 @@ public class CloudMedia {
     private static final String FIELD_UNKNOWN = "unknown";
 
     private static CloudMedia sCMInstance;
+    private LoginManager mLoginManager;
 
     private CloudMedia() {
-
+        mLoginManager = new LoginManager();
     }
 
     /**
@@ -36,16 +37,41 @@ public class CloudMedia {
         return sCMInstance;
     }
 
-    public boolean registerAccount() {
-        return true;
+    /**
+     * The detail info of a user to login
+     */
+    public static class CMUser {
+        String role;
+        String account;
+        String password;
+        String token;
+        String vendorID;
+        String vendorNick;
+        String groupID;
+        String groupNick;
     }
 
-    public boolean login() {
-        return true;
+    /**
+     * Login to the server with a pair of account and password.
+     * This API may be time-consuming, APP should not call it in main thread.
+     */
+    public boolean login(final String ip, final String port, final String account, final String passwd) {
+        return mLoginManager.login(ip, port, account, passwd);
     }
 
-    public boolean logout() {
-        return true;
+    /**
+     * Logout from the server
+     * This API may be time-consuming, APP should not call it in main thread.
+     */
+    public boolean logout(String account) {
+        return mLoginManager.logout(account);
+    }
+
+    /**
+     * Get user info associate with the account which is logged in
+     */
+    public CMUser getUser(String account) {
+        return mLoginManager.getUser(account);
     }
 
     /**
@@ -164,7 +190,7 @@ public class CloudMedia {
     /**
      * Generate a PUSH node as an actor to respond all stream requests from a PULL node
      */
-    public static PushNode declarePushNode(Context context, String nodeNick, String deviceName) {
+    public PushNode declarePushNode(Context context, String nodeNick, String deviceName) {
         String nid = getIDFromServer();
         return new PushNode(context, nid, nodeNick, deviceName);
     }
@@ -172,7 +198,7 @@ public class CloudMedia {
     /**
      * Generate a PULL node as an stream requestor
      */
-    public static PullNode declarePullNode(Context context, String nodeNick, String deviceName) {
+    public PullNode declarePullNode(Context context, String nodeNick, String deviceName) {
         String nid = getIDFromServer();
         return new PullNode(context, nid, nodeNick, deviceName);
     }

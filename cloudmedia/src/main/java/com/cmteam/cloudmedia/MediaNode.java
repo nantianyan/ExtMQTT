@@ -33,8 +33,7 @@ public abstract class MediaNode {
     /**
      * A node calls it to connect to MCS before doing any media transaction
      */
-    public abstract boolean connect(final String user, final String passwd, final String groupID, final String groupNick,
-                           final String vendorID, final String vendorNick, final CloudMedia.RPCResultListener listener);
+    public abstract boolean connect(final CloudMedia.CMUser user, final CloudMedia.RPCResultListener listener);
 
     /**
      * A node calls it to disconnect from MCS when it doesn't do media transaction any more
