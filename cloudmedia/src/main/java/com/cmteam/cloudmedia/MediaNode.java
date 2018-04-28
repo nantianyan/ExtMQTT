@@ -55,6 +55,11 @@ public abstract class MediaNode {
      */
     public boolean sendMessage(String peerGroupID,String peerNodeID, String message) {
         Log.d(TAG, "sendMessage: groupID=" + peerGroupID + ",nodeID=" + peerNodeID + ",message=" + message);
+        if (mExtMqttClient == null) {
+            Log.e(TAG, "mExtMqttClient is null, connect failed?");
+            return false;
+        }
+
         String topic = Topic.generate(whoareyou(peerGroupID, peerNodeID),whoami(),Topic.Action.EXCHANGE_MSG);
         mExtMqttClient.MqttPublish(topic, message, 2, false);
         return true;
@@ -89,6 +94,10 @@ public abstract class MediaNode {
         Log.d(TAG, "sendRequest to: " + whoareyou +
                 ", calling: " + method +
                 ", params: " + params);
+        if (mExtMqttClient == null) {
+            Log.e(TAG, "mExtMqttClient is null, connect failed?");
+            return false;
+        }
 
         P2PMqttAsyncRequest request = new P2PMqttAsyncRequest();
         request.setWhoareyou(whoareyou);

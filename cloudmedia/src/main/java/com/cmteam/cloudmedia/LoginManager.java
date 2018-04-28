@@ -17,6 +17,9 @@ import org.json.JSONObject;
 public class LoginManager {
     private static final String TAG = "LoginManager";
     private static final String LOGIN_URL = "http://139.224.128.15:8085/login_app";
+    private static final String KEY_RESULT = "result";
+    private static final String RESULT_OK = "OK";
+    private static final String RESULT_ERROR = "ERROR";
     private static final String KEY_USER_ROLE = "role";
     private static final String KEY_USER_ACCOUNT = "account";
     private static final String KEY_USER_PASSWORD = "password";
@@ -38,8 +41,10 @@ public class LoginManager {
         HttpURLConnection connection = null;
         String responseBody = null;
         mLoginURL = buildLoginURL(ip, port);
+
         try {
             url = new URL(mLoginURL+"?action=in");
+            Log.i(TAG, "Login URL: " + url.toString());
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
@@ -71,12 +76,23 @@ public class LoginManager {
                 connection.disconnect();
             }
         }
+        if (responseBody == null) {
+            Log.e(TAG, "Response body is null!");
+            return false;
+        }
 
         CloudMedia.CMUser user = new CloudMedia.CMUser();
         user.account = account;
         user.password = passwd;
         try {
             JSONObject jsonObj = new JSONObject(responseBody);
+            if (jsonObj.has(KEY_RESULT)) {
+                String result = jsonObj.getString(KEY_RESULT);
+                if (!result.equals(RESULT_OK))
+                    return false;
+            } else
+                return false;
+
             if (jsonObj.has(KEY_USER_ROLE)) {
                 user.role = jsonObj.getString(KEY_USER_ROLE);
             }
@@ -112,6 +128,7 @@ public class LoginManager {
 
         try {
             url = new URL(mLoginURL+"?action=out");
+            Log.i(TAG, "Logout URL: " + url.toString());
             connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("POST");
             connection.setDoOutput(true);
