@@ -62,6 +62,7 @@ public class PullNode extends MediaNode {
                 };
                 mTopicHandler.install(Topic.generate(whoami(),whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
                 mTopicHandler.install(Topic.generate(whoareyou(mNode.getGroupID(),"*"), whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
+                mTopicHandler.install(Topic.generate(whoareyou("*","*"), whoisMC(),Topic.Action.NODES_CHANGE), nodesChangeHandler);
 
                 putOnline(new CloudMedia.RPCResultListener() {
                     @Override
