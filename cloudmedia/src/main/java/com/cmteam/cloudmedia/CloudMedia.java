@@ -188,6 +188,13 @@ public class CloudMedia {
     }
 
     /**
+     * A listener interface used to be notified when the remote server is reset
+     */
+    public interface OnServerResetListener {
+        void onServerReset(String description);
+    }
+
+    /**
      * Generate a PUSH node as an actor to respond all stream requests from a PULL node
      */
     public PushNode declarePushNode(Context context, String nodeNick, String deviceName) {

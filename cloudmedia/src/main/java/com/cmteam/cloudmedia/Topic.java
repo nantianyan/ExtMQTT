@@ -33,6 +33,12 @@ public class Topic {
          */
         public static final String EXCHANGE_MSG = "exchange_msg";
 
+        /**
+         * notified when the remote server is reset
+         * Payload: {"description":<Detail description>}
+         */
+        public static final String RESET = "reset";
+
     }
 
     public static String generate(String toWho, String fromWho, String action) {

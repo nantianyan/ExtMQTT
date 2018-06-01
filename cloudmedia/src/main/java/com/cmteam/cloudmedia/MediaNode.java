@@ -86,6 +86,28 @@ public abstract class MediaNode {
         });
     }
 
+    /**
+     * Set a listener to be notified when the remote server is reset. When this happens, it means all nodes
+     * online info on the server is cleared, so that the node must become to be disconnected from the server,
+     * and connect to it again.
+     */
+    public void setServerResetListener(final CloudMedia.OnServerResetListener listener) {
+        mTopicHandler.install(Topic.generate("*_*_*", whoisMC(), Topic.Action.RESET), new MqttTopicHandler() {
+            @Override
+            public void onMqttMessage(String topic, String jstr) {
+                String description = null;
+                try {
+                    JSONObject jsonObj = new JSONObject(jstr);
+                    description = jsonObj.getString("description");
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+
+                listener.onServerReset(description);
+            }
+        });
+    }
+
     protected static String getBrokerUrl() {
         return "tcp://139.224.128.15:1883";
     }
