@@ -24,6 +24,7 @@ public class LoginManager {
     private static final String KEY_USER_ACCOUNT = "account";
     private static final String KEY_USER_PASSWORD = "password";
     private static final String KEY_USER_TOKEN = "token";
+    private static final String KEY_USER_NODE_ID = "node_id";
     private static final String KEY_USER_VENDOR_ID = "vendor_id";
     private static final String KEY_USER_VENDOR_NICK = "vendor_nick";
     private static final String KEY_USER_GROUP_ID = "group_id";
@@ -98,6 +99,9 @@ public class LoginManager {
             }
             if (jsonObj.has(KEY_USER_TOKEN)) {
                 user.token = jsonObj.getString(KEY_USER_TOKEN);
+            }
+            if (jsonObj.has(KEY_USER_NODE_ID)) {
+                user.nodeID = jsonObj.getString(KEY_USER_NODE_ID);
             }
             if (jsonObj.has(KEY_USER_VENDOR_ID)) {
                 user.vendorID = jsonObj.getString(KEY_USER_VENDOR_ID);

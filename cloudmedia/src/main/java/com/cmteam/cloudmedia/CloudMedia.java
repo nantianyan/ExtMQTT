@@ -45,6 +45,7 @@ public class CloudMedia {
         String account;
         String password;
         String token;
+        String nodeID;
         String vendorID;
         String vendorNick;
         String groupID;
@@ -198,16 +199,16 @@ public class CloudMedia {
      * Generate a PUSH node as an actor to respond all stream requests from a PULL node
      */
     public PushNode declarePushNode(Context context, String nodeNick, String deviceName) {
-        String nid = getIDFromServer();
-        return new PushNode(context, nid, nodeNick, deviceName);
+        //String nid = getIDFromServer();
+        return new PushNode(context, nodeNick, deviceName);
     }
 
     /**
      * Generate a PULL node as an stream requestor
      */
     public PullNode declarePullNode(Context context, String nodeNick, String deviceName) {
-        String nid = getIDFromServer();
-        return new PullNode(context, nid, nodeNick, deviceName);
+        //String nid = getIDFromServer();
+        return new PullNode(context, nodeNick, deviceName);
     }
 
     private static String getIDFromServer(){

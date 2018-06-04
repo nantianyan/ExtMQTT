@@ -17,11 +17,10 @@ public class PullNode extends MediaNode {
     private OnNodesListChange mNodesListChangeLisener;
     private OnStreamException mStreamExceptionListener;
  
-    public PullNode(Context context, String id, String nick, String deviceName) {
+    public PullNode(Context context, String nick, String deviceName) {
 	    mContext = context;
         mNode = new Node();
         mNode.setRole(CloudMedia.CMRole.ROLE_PULLER.str());
-        mNode.setID(id);
         mNode.setNick(nick);
         mNode.setDeviceName(deviceName);
         mNode.setLocation(FIELD_LOCATION_DEFAULT);
@@ -34,6 +33,7 @@ public class PullNode extends MediaNode {
             Log.e(TAG, "account role not match");
             return false;
         }
+        mNode.setID(user.nodeID);
         mNode.setGroupID(user.groupID);
         mNode.setGroupNick(user.groupNick);
         mNode.setVendorID(user.vendorID);

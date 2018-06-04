@@ -18,11 +18,10 @@ public class PushNode extends MediaNode {
     private OnStopPushMedia mOnStopPushMediaActor;
     private OnStartPushMedia mOnStartPushMediaActor;
 
-    public PushNode(Context context, String id, String nick, String deviceName) {
+    public PushNode(Context context, String nick, String deviceName) {
 	    mContext = context;
         mNode = new Node();
         mNode.setRole(CloudMedia.CMRole.ROLE_PUSHER.str());
-        mNode.setID(id);
         mNode.setNick(nick);
         mNode.setDeviceName(deviceName);
         mNode.setLocation(FIELD_LOCATION_DEFAULT);
@@ -35,6 +34,7 @@ public class PushNode extends MediaNode {
             Log.e(TAG, "account role not match");
             return false;
         }
+        mNode.setID(user.nodeID);
         mNode.setGroupID(user.groupID);
         mNode.setGroupNick(user.groupNick);
         mNode.setVendorID(user.vendorID);
