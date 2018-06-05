@@ -38,21 +38,6 @@ public class CloudMedia {
     }
 
     /**
-     * The detail info of a user to login
-     */
-    public static class CMUser {
-        String role;
-        String account;
-        String password;
-        String token;
-        String nodeID;
-        String vendorID;
-        String vendorNick;
-        String groupID;
-        String groupNick;
-    }
-
-    /**
      * Login to the server with a pair of account and password.
      * This API may be time-consuming, APP should not call it in main thread.
      */

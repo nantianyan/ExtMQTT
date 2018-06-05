@@ -82,7 +82,7 @@ public class LoginManager {
             return false;
         }
 
-        CloudMedia.CMUser user = new CloudMedia.CMUser();
+        CMUser user = new CMUser();
         user.account = account;
         user.password = passwd;
         try {
@@ -168,7 +168,7 @@ public class LoginManager {
         return true;
     }
 
-    public CloudMedia.CMUser getUser(String account) {
+    public CMUser getUser(String account) {
         LoginSession session = mLoginSessions.get(account);
         if (session == null)
             return null;
@@ -181,21 +181,22 @@ public class LoginManager {
     }
 
     private class LoginSession {
-        private CloudMedia.CMUser mUser;
+        private CMUser mUser;
 
         private LoginSession() {
         }
 
-        private void setUser(CloudMedia.CMUser user) {
+        private void setUser(CMUser user) {
             mUser = user;
         }
 
-        private CloudMedia.CMUser getUser() {
-            CloudMedia.CMUser user = new CloudMedia.CMUser();
+        private CMUser getUser() {
+            CMUser user = new CMUser();
             user.role = mUser.role;
             user.account = mUser.account;
             user.password = mUser.password;
             user.token = mUser.token;
+            user.nodeID = mUser.nodeID;
             user.vendorID = mUser.vendorID;
             user.vendorNick = mUser.vendorNick;
             user.groupID = mUser.groupID;

@@ -25,11 +25,11 @@ public class PushNode extends MediaNode {
         mNode.setNick(nick);
         mNode.setDeviceName(deviceName);
         mNode.setLocation(FIELD_LOCATION_DEFAULT);
-        mNode.setStreamStatus(CloudMedia.CMStreamStatus.PUSHING_CLOSE);
+        mNode.setStreamStatus(CloudMedia.CMStreamStatus.PUSHING_CLOSE.str());
     }
 
     @Override
-    public boolean connect(final CloudMedia.CMUser user, final CloudMedia.RPCResultListener listener) {
+    public boolean connect(final CMUser user, final CloudMedia.RPCResultListener listener) {
         if (!CloudMedia.CMRole.ROLE_PUSHER.str().equals(user.role)) {
             Log.e(TAG, "account role not match");
             return false;

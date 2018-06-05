@@ -113,8 +113,8 @@ public final class Node {
         mLocation = location;
     }
 
-    public void setStreamStatus(CloudMedia.CMStreamStatus status){
-        mStreamStatus = status.str();
+    public void setStreamStatus(String status){
+        mStreamStatus = status;
     }
 
     public void setGroupID(String id){

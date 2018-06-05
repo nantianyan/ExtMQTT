@@ -33,12 +33,34 @@ public abstract class MediaNode {
     /**
      * A node calls it to connect to MCS before doing any media transaction
      */
-    public abstract boolean connect(final CloudMedia.CMUser user, final CloudMedia.RPCResultListener listener);
+    public abstract boolean connect(final CMUser user, final CloudMedia.RPCResultListener listener);
 
     /**
      * A node calls it to disconnect from MCS when it doesn't do media transaction any more
      */
     public abstract boolean disconnect();
+
+    /**
+     * A node calls it to get detail info of itself.
+     * The info is not effective until connect() method returns RPCSuccess,
+     * so this method must be called after the time the connect() method was called successfully.
+     */
+    public Node getMyNode() {
+        Node node = new Node();
+        node.setID(mNode.getID());
+        node.setNick(mNode.getNick());
+        node.setRole(mNode.getRole());
+        node.setDeviceName(mNode.getDeviceName());
+        node.setLocation(mNode.getLocation());
+        node.setStreamStatus(mNode.getStreamStatus());
+        node.setGroupID(mNode.getGroupID());
+        node.setGroupNick(mNode.getGroupNick());
+        node.setVendorID(mNode.getVendorID());
+        node.setVendorNick(mNode.getVendorNick());
+
+        return node;
+    }
+
 
     /**
      * A node calls it to notify a new stream status to MCS,
