@@ -16,7 +16,6 @@ import org.json.JSONObject;
 
 public class LoginManager {
     private static final String TAG = "LoginManager";
-    private static final String LOGIN_URL = "http://139.224.128.15:8085/login_app";
     private static final String KEY_RESULT = "result";
     private static final String RESULT_OK = "OK";
     private static final String RESULT_ERROR = "ERROR";

@@ -21,6 +21,7 @@ public class CloudMedia {
     private static final String FIELD_UNKNOWN = "unknown";
 
     private static CloudMedia sCMInstance;
+    private static String sCMIP = "47.100.125.222";
     private LoginManager mLoginManager;
 
     private CloudMedia() {
@@ -42,6 +43,7 @@ public class CloudMedia {
      * This API may be time-consuming, APP should not call it in main thread.
      */
     public boolean login(final String ip, final String port, final String account, final String passwd) {
+        sCMIP = ip;
         return mLoginManager.login(ip, port, account, passwd);
     }
 
@@ -58,6 +60,10 @@ public class CloudMedia {
      */
     public CMUser getUser(String account) {
         return mLoginManager.getUser(account);
+    }
+
+    public static String getServerIP() {
+        return sCMIP;
     }
 
     /**
@@ -184,7 +190,6 @@ public class CloudMedia {
      * Generate a PUSH node as an actor to respond all stream requests from a PULL node
      */
     public PushNode declarePushNode(Context context, String nodeNick, String deviceName) {
-        //String nid = getIDFromServer();
         return new PushNode(context, nodeNick, deviceName);
     }
 
@@ -192,57 +197,7 @@ public class CloudMedia {
      * Generate a PULL node as an stream requestor
      */
     public PullNode declarePullNode(Context context, String nodeNick, String deviceName) {
-        //String nid = getIDFromServer();
         return new PullNode(context, nodeNick, deviceName);
-    }
-
-    private static String getIDFromServer(){
-        if(false) {
-            URL url = null;
-            HttpURLConnection conn = null;
-            try {
-                url = new URL("http://139.224.128.15:8085/getID");
-                conn = (HttpURLConnection) url.openConnection();
-
-                conn.setRequestMethod("GET");
-                conn.setDoInput(true);
-                //conn.setRequestProperty("action", "getID");
-                conn.setUseCaches(false);
-                conn.setReadTimeout(8000);
-                conn.setConnectTimeout(8000);
-
-                int responseCode = conn.getResponseCode();
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    InputStream in = conn.getInputStream();
-                    BufferedReader bufReader = new BufferedReader(new InputStreamReader(in));
-
-                    StringBuilder response = new StringBuilder();
-                    String line = null;
-                    while ((line = bufReader.readLine()) != null) {
-                        response.append(line);
-                    }
-                    Log.i(TAG, "get id from server: " + response.toString());
-
-                    return response.toString();
-                } else {
-                    Log.i(TAG, "http response error");
-                }
-
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                if (conn != null) {
-                    conn.disconnect();
-                }
-            }
-
-            return null;
-        } else {
-            return "N" + System.nanoTime();
-        }
     }
 
 }
