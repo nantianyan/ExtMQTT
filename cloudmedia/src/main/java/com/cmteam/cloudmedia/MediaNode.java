@@ -71,6 +71,20 @@ public abstract class MediaNode {
     }
 
     /**
+     * A node calls it to change its nick name
+     */
+    public boolean updateNick(final String newNick, final CloudMedia.RPCResultListener listener) {
+        return updateCMField(CloudMedia.CMField.NICK, newNick, listener);
+    }
+
+    /**
+     * A node calls it to update its location
+     */
+    public boolean updateLocation(final String newLocation, final CloudMedia.RPCResultListener listener) {
+        return updateCMField(CloudMedia.CMField.LOCATION, newLocation, listener);
+    }
+
+    /**
      * A node calls it to exchange data with a peer node,
      * the application can define the data format within the message,
      * the parameter groupID and nodeID show where the message is sent to

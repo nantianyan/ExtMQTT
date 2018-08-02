@@ -36,11 +36,11 @@ public class LoginManager {
 
     }
 
-    public boolean login(final String ip, final String port, final String account, final String passwd) {
+    public boolean login(final String domain, final String account, final String passwd) {
         URL url = null;
         HttpURLConnection connection = null;
         String responseBody = null;
-        mLoginURL = buildLoginURL(ip, port);
+        mLoginURL = buildLoginURL(domain);
 
         try {
             url = new URL(mLoginURL+"?action=in");
@@ -175,8 +175,8 @@ public class LoginManager {
         return session.getUser();
     }
 
-    private static final String buildLoginURL(final String ip, final String port) {
-        return "http://" + ip + ":" + port + "/login_app";
+    private static final String buildLoginURL(final String domain) {
+        return "https://" + domain + "/login_app";
     }
 
     private class LoginSession {

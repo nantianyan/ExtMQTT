@@ -42,9 +42,8 @@ public class CloudMedia {
      * Login to the server with a pair of account and password.
      * This API may be time-consuming, APP should not call it in main thread.
      */
-    public boolean login(final String ip, final String port, final String account, final String passwd) {
-        sCMIP = ip;
-        return mLoginManager.login(ip, port, account, passwd);
+    public boolean login(final String domainName, final String account, final String passwd) {
+        return mLoginManager.login(domainName, account, passwd);
     }
 
     /**
