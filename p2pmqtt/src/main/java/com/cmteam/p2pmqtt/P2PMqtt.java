@@ -121,8 +121,9 @@ public class P2PMqtt {
                 //mConnectOptions.setPassword(passWord.toCharArray());
                 mConnectOptions.setAutomaticReconnect(true);
                 String payload = "";
-                MyJsonString.makeKeyValueString(payload, "who", mWhoami);
-                MyJsonString.addJsonBrace(payload);
+                payload = MyJsonString.makeKeyValueString(payload, "who", mWhoami);
+                payload = MyJsonString.addJsonBrace(payload);
+                Log.d(TAG, "setWill: payload=" + payload);
                 mConnectOptions.setWill("media_controller/bq/nodes_will", payload.getBytes(), 2, false);
 
                 mClient.connect(mConnectOptions, this, new IMqttActionListener() {
