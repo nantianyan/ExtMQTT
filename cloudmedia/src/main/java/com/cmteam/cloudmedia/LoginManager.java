@@ -36,7 +36,7 @@ public class LoginManager {
 
     }
 
-    public boolean login(final String domain, final String account, final String passwd) {
+    public String login(final String domain, final String account, final String passwd) {
         URL url = null;
         HttpURLConnection connection = null;
         String responseBody = null;
@@ -64,7 +64,7 @@ public class LoginManager {
             os.close();
             InputStream is = connection.getInputStream();
             if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                return false;
+                return null;
             }
             responseBody = getResponseBody(is);
         } catch (MalformedURLException e) {
@@ -78,7 +78,7 @@ public class LoginManager {
         }
         if (responseBody == null) {
             Log.e(TAG, "Response body is null!");
-            return false;
+            return null;
         }
 
         CMUser user = new CMUser();
@@ -89,9 +89,9 @@ public class LoginManager {
             if (jsonObj.has(KEY_RESULT)) {
                 String result = jsonObj.getString(KEY_RESULT);
                 if (!result.equals(RESULT_OK))
-                    return false;
+                    return null;
             } else
-                return false;
+                return null;
 
             if (jsonObj.has(KEY_USER_ROLE)) {
                 user.role = jsonObj.getString(KEY_USER_ROLE);
@@ -120,12 +120,12 @@ public class LoginManager {
 
         LoginSession session = new LoginSession();
         session.setUser(user);
-        mLoginSessions.put(user.account, session);
+        mLoginSessions.put(user.nodeID, session);
 
-        return true;
+        return user.nodeID;
     }
 
-    public boolean logout(String account) {
+    public boolean logout(final String account, final String nodeID) {
         URL url = null;
         HttpURLConnection connection = null;
 
@@ -162,13 +162,13 @@ public class LoginManager {
             }
         }
 
-        mLoginSessions.remove(account);
+        mLoginSessions.remove(nodeID);
 
         return true;
     }
 
-    public CMUser getUser(String account) {
-        LoginSession session = mLoginSessions.get(account);
+    public CMUser getUser(final String nodeID) {
+        LoginSession session = mLoginSessions.get(nodeID);
         if (session == null)
             return null;
 
