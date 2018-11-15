@@ -145,7 +145,7 @@ public abstract class MediaNode {
     }
 
     protected static String getBrokerUrl() {
-        return "tcp://" + CloudMedia.getServerIP() + ":1883";
+        return "tcp://" + CloudMedia.getServerHost() + ":1883";
     }
 
     protected boolean sendRequest(String whoareyou, String method, String params, final CloudMedia.RPCResultListener listener) {
